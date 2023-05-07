@@ -6,11 +6,8 @@ using System.Threading.Tasks;
 
 namespace TournamentManager3000.Models
 {
-    public class Player : IEntity
+    public interface IEntity
     {
         public int Id { get; set; }
-        public string Nickname { get; set; }
-        public string? Description { get; set; }
-
     }
 }
