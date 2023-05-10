@@ -9,26 +9,15 @@ namespace TournamentManager3000.UI.Helpers
     public class LoadingSpinner
     {
         private int _counter;
-        private readonly CancellationTokenSource _cts;
+        private CancellationToken _ct;
 
-        public LoadingSpinner(CancellationTokenSource cts)
+        public async Task Start(CancellationToken ct)
         {
-            _cts = cts;
-        }
-
-        public async Task Start()
-        {
+            _ct = ct;
             _counter = 0;
             Console.CursorVisible = false;
             Console.Write(" ");
             await Spin();
-        }
-
-        public void Stop()
-        {
-            _counter = 0;
-            _cts.TryReset();
-            Console.CursorVisible = true;
         }
 
         private async Task Spin()
@@ -44,8 +33,8 @@ namespace TournamentManager3000.UI.Helpers
                     case 3: Console.Write("|"); break;
                 }
                 Console.SetCursorPosition(Console.CursorLeft - 1, Console.CursorTop);
-                try { await Task.Delay(100, _cts.Token); }
-                catch (TaskCanceledException) { Stop(); break; }
+                try { await Task.Delay(100, _ct); }
+                catch (TaskCanceledException) { Console.CursorVisible = true; break; }
             }
         }
     }

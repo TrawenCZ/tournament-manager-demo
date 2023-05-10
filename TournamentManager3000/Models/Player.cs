@@ -12,5 +12,9 @@ namespace TournamentManager3000.Models
         public string Nickname { get; set; }
         public string? Description { get; set; }
 
+        public int Wins { get; private set; } = 0;
+
+        public void AddWin() => Wins++;
+
     }
 }

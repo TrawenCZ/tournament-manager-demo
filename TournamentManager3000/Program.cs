@@ -10,7 +10,8 @@ namespace TournamentManager3000 {
             Console.WriteLine("Hello, World!");
 
             // Enum.GetValues(typeof(Testing)).Cast<Testing>().ToList().ForEach(x => Console.WriteLine(x));
-
+            Console.WriteLine((int)Math.Pow(2, Math.Ceiling(Math.Log(1, 2))));
+            /*
             IEntity entity = new Player();
             switch (entity.GetType())
             {
@@ -34,6 +35,7 @@ namespace TournamentManager3000 {
                     String.Format("Name: {0}", f.Name)
                     );
             }
+            */
         }
     }
 }

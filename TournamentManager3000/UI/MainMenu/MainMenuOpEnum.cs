@@ -10,10 +10,10 @@ namespace TournamentManager3000.UI.MainMenu
     {
         CreateTournament,
         ShowTournament,
-        CreateTeam,
-        ShowTeam,
+        ListTournaments,
         CreatePlayer,
         ShowPlayer,
+        ListPlayers,
         Help,
         Exit
     }

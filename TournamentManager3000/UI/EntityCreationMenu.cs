@@ -16,7 +16,5 @@ namespace TournamentManager3000.UI
             {
             }
         }
-
-        private void LoadProp()
     }
 }

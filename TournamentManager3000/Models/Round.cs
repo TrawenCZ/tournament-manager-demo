@@ -10,6 +10,6 @@ namespace TournamentManager3000.Models
     {
         public int Id { get; set; }
         public int RoundNumber { get; set; }
-        public List<Match> Matches { get; set; }
+        public List<Match> Matches { get; init; }
     }
 }

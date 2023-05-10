@@ -9,8 +9,9 @@ namespace TournamentManager3000.Models
     public class Match : IEntity
     {
         public int Id { get; set; }
-        public Team Team1 { get; set; }
-        public Team Team2 { get; set; }
-        public Team? Winner { get; set; }
+        public int Player1Id { get; set; }
+        public Player Player1 { get; set; }
+        public int Player2Id { get; set; }
+        public Player Player2 { get; set; }
     }
 }
