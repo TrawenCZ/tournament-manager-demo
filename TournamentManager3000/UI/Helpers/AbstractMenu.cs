@@ -9,7 +9,7 @@ namespace TournamentManager3000.UI.Helpers
     public abstract class AbstractMenu
     {
         private LoadingSpinner _loadingSpinner = new LoadingSpinner();
-        public abstract Task<bool> TryExecute();
+        public abstract Task<bool> TryExecute(out string messageToPrint);
 
         public async Task WaitForLoad(Task task)
         {

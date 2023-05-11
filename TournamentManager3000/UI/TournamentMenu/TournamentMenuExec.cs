@@ -7,7 +7,7 @@ using TournamentManager3000.UI.Helpers;
 
 namespace TournamentManager3000.UI.TournamentMenu
 {
-    public class TournamentMenu : AbstractMenu
+    public class TournamentMenuExec : AbstractMenu
     {
         public override Task<bool> TryExecute()
         {

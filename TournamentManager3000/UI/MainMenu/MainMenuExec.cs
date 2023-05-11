@@ -7,15 +7,15 @@ using TournamentManager3000.UI.Helpers;
 
 namespace TournamentManager3000.UI.MainMenu
 {
-    public class MainMenu : AbstractMenu
+    public class MainMenuExec : AbstractMenu
     {
         private readonly MainMenuData _data;
-        public MainMenu(MainMenuData data) 
+        public MainMenuExec(MainMenuData data) 
         {
             _data = data;
         }
 
-        public override Task<bool> TryExecute()
+        public override Task<bool> TryExecute(out string messageToPrint)
         {
             
         }
