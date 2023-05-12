@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using TournamentManager3000.Controllers.Helpers;
@@ -19,15 +20,6 @@ namespace TournamentManager3000.Controllers
         {
             _tournamentContext = tournamentContext;
         }
-
-        /*
-         *                 {"menu name", playerController.MenuName},
-                {"help", playerController.Help},
-                {"exit", playerController.Exit},
-                {"create-player", playerController.CreatePlayer},
-                {"show-player", playerController.ShowPlayer},
-                {"list-players", playerController.ListPlayers},
-        */
 
         public string MenuName(MenuInput input) => "Player";
 
@@ -57,6 +49,20 @@ namespace TournamentManager3000.Controllers
             return $"Player with nickname '{input[0]}' was successfuly created and has been assigned with ID '{newPlayer.Id}'.";
         }
 
+        public string DeletePlayer(MenuInput input)
+        {
+            var message = "";
+            if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
+
+            var playerToDelete = new Player();
+            if (!CommonMethods.TryParsePlayer(input[0], _tournamentContext, out playerToDelete)) return "Player with given ID/nickname does not exist!";
+
+            playerToDelete.IsDeleted = true;
+            _tournamentContext.Update(playerToDelete);
+            _tournamentContext.SaveChanges();
+            return $"Player with ID '{playerToDelete.Id}' and nickname '{playerToDelete.Nickname}'" + CommonMessages.SUCC_DEL;
+        }
+
         public string ShowPlayer(MenuInput input)
         {
             var message = "";
@@ -74,7 +80,24 @@ namespace TournamentManager3000.Controllers
                 {"Total Losses", new List<string>() {player.Losses.ToString() } },
                 {"Matches played", new List<string>() { player.MatchesPlayed.ToString() } },
                 {"Win / Loss ratio", new List<string>() { player.Losses == 0 ? "No losses yet" : (player.Wins / player.Losses).ToString() } },
-                {"Win / Match ratio", new List<string>() { player.MatchesPlayed == 0 ? "No matches played yet" : (player.Wins / player.MatchesPlayed).ToString() } }
+                {"Win / Match ratio", new List<string>() { player.MatchesPlayed == 0 ? "No matches played yet" : (player.Wins / player.MatchesPlayed).ToString() } },
+            });
+        }
+
+        public string ListPlayers(MenuInput input)
+        {
+            var allStoredPlayers = _tournamentContext.Players.ToList();
+            if (allStoredPlayers.Count == 0) return "No players stored yet.";
+            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>()
+            {
+                {"ID", allStoredPlayers.Select(p => p.Id.ToString()).ToList() },
+                {"Nickname", allStoredPlayers.Select(p => p.Nickname).ToList() },
+                {"Description", allStoredPlayers.Select(p => p.Description != null ? p.Description : CommonMessages.NO_DESCR).ToList() },
+                {"Total Wins", allStoredPlayers.Select(p => p.Wins.ToString()).ToList() },
+                {"Total Losses", allStoredPlayers.Select(p => p.Losses.ToString()).ToList() },
+                {"Matches played", allStoredPlayers.Select(p => p.MatchesPlayed.ToString()).ToList() },
+                {"Win / Loss ratio", allStoredPlayers.Select(p => p.Losses == 0 ? "No losses yet" : (p.Wins / p.Losses).ToString()).ToList() },
+                {"Win / Match ratio", allStoredPlayers.Select(p => p.MatchesPlayed == 0 ? "No matches played yet" : (p.Wins / p.MatchesPlayed).ToString()).ToList() },
             });
         }
     }

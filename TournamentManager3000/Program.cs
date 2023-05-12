@@ -1,6 +1,9 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Collections.Generic;
+using TournamentManager3000.Controllers;
 using TournamentManager3000.Models;
+using TournamentManager3000.UI;
+using TournamentManager3000.UI.Helpers;
 
 namespace TournamentManager3000 {
 
@@ -9,37 +12,16 @@ namespace TournamentManager3000 {
 
     public class Program
     {
-        public static void Main()
+        public async static Task Main()
         {
-            Console.WriteLine("Hello, World!");
+            TournamentContext context = new TournamentContext();
+            ConsoleProvider consoleProvider = new ConsoleProvider();
+            TournamentController tournamentController = new TournamentController(context, consoleProvider);
+            PlayerController playerController = new PlayerController(context);
+            ImportExportController importExportController = new ImportExportController(context);
 
-            // Enum.GetValues(typeof(Testing)).Cast<Testing>().ToList().ForEach(x => Console.WriteLine(x));
-            Console.WriteLine((int)Math.Pow(2, Math.Ceiling(Math.Log(1, 2))));
-            /*
-            IEntity entity = new Player();
-            switch (entity.GetType())
-            {
-                case var type when type == typeof(Player):
-                    Player player = (Player) entity;
-                    break;
-                case var type when type == typeof(Team):
-                    Team team = (Team) entity;
-                    break;
-                case var type when type == typeof(Round):
-                    Round round = (Round) entity;
-                    break;
-                default:
-                    break;
-            }
-
-            IEntity entityTest = new Player();
-            foreach (var f in entityTest.GetType().GetProperties().Where(prop => prop.CanWrite))
-            {
-                Console.WriteLine(
-                    String.Format("Name: {0}", f.Name)
-                    );
-            }
-            */
+            MenuData menuData = new MenuData(tournamentController, playerController, importExportController);
+            await consoleProvider.CommunicateWithUser(menuData);
         }
     }
 }

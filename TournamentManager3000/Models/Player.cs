@@ -17,6 +17,6 @@ namespace TournamentManager3000.Models
         public int Losses { get; set; } = 0;
         public int MatchesPlayed { get; set; } = 0;
 
-        public List<Match> Matches { get; set; } = new List<Match>();
+        //public List<Match> Matches { get; set; } = new List<Match>();
     }
 }

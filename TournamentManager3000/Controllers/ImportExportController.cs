@@ -8,5 +8,10 @@ namespace TournamentManager3000.Controllers
 {
     public class ImportExportController
     {
+        private readonly TournamentContext _tournamentContext;
+        public ImportExportController(TournamentContext tournamentContext) 
+        {
+            _tournamentContext = tournamentContext;
+        }
     }
 }

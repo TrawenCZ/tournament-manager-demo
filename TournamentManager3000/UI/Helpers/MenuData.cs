@@ -5,9 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using TournamentManager3000.Controllers;
 using TournamentManager3000.Controllers.Helpers;
-using TournamentManager3000.UI.MainMenu;
-using TournamentManager3000.UI.PlayerMenu;
-using TournamentManager3000.UI.TournamentMenu;
 
 namespace TournamentManager3000.UI.Helpers
 {
