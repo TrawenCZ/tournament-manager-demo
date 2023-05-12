@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using TournamentManager3000.Models;
 
 namespace TournamentManager3000 {
+
+    using MenuInput = List<string>;
+    public delegate string MenuAction(MenuInput inputList);
+
     public class Program
     {
         public static void Main()

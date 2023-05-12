@@ -11,15 +11,7 @@ namespace TournamentManager3000.UI.MainMenu
         public readonly string WELCOME_MSG = "Welcome to TournamentManager3000!\n" +
                 "Type 'help' to see available commands.\n";
 
-        public readonly string HELP_MSG =  "Available commands ('<XXX>' means required attribute, '<XXX>?' means optional one):\n" +
-                "'help' - shows this message\n" +
-                "'exit' - exits the program\n" +
-                "'create-tournament <NAME> <DESCRIPTION>?' - creates a new tournament\n" +
-                "'show-tournament <ID>' - shows a tournament\n" +
-                "'list-tournaments' - lists all stored tournaments'\n" +
-                "'create-player <NICKNAME> <DESCRIPTION>?' - creates a new player\n" +
-                "'show-player <ID or NICKNAME>' - shows a player\n" +
-                "'list-players' - lists all stored players";
+        public readonly string HELP_MSG =  
 
         public readonly string EXIT_MSG = "Exiting the program...";
 
