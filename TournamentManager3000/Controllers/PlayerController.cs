@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TournamentManager3000.Controllers
 {
-    internal class PlayerController
+    public class PlayerController
     {
     }
 }

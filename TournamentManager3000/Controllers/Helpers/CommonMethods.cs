@@ -37,5 +37,56 @@ namespace TournamentManager3000.Controllers.Helpers
             }
             return paddedList;
         }
+
+
+        public static string BuildTableFromDictionary(Dictionary<string, List<string>> data)
+        {
+            // Determine the number of rows and columns in the table
+            int numRows = data.First().Value.Count;
+            int numCols = data.Count;
+
+            // Determine the maximum width of each column
+            int[] columnWidths = new int[numCols];
+            int i = 0;
+            foreach (string columnName in data.Keys)
+            {
+                int maxColumnWidth = Math.Max(columnName.Length, data[columnName].Max(value => value.Length));
+                columnWidths[i++] = maxColumnWidth;
+            }
+
+            // Build the table header
+            StringBuilder tableBuilder = new StringBuilder();
+            foreach (string columnName in data.Keys)
+            {
+                tableBuilder.Append(columnName.PadRight(columnWidths[i], ' '));
+                tableBuilder.Append(" | ");
+            }
+            tableBuilder.Remove(tableBuilder.Length - 3, 3); // Remove the last separator and trailing space
+            tableBuilder.AppendLine();
+
+            // Build the separator row
+            foreach (int columnWidth in columnWidths)
+            {
+                tableBuilder.Append(new string('-', columnWidth));
+                tableBuilder.Append("-+-");
+            }
+            tableBuilder.Remove(tableBuilder.Length - 3, 3); // Remove the last separator and trailing hyphen
+            tableBuilder.AppendLine();
+
+            // Build the data rows
+            for (int row = 0; row < numRows; row++)
+            {
+                foreach (string columnName in data.Keys)
+                {
+                    tableBuilder.Append(data[columnName][row].PadRight(columnWidths[i], ' '));
+                    tableBuilder.Append(" | ");
+                }
+                tableBuilder.Remove(tableBuilder.Length - 3, 3); // Remove the last separator and trailing space
+                tableBuilder.AppendLine();
+            }
+
+            return tableBuilder.ToString();
+        }
+
     }
 }

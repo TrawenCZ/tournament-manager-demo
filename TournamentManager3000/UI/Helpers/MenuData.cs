@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TournamentManager3000.Controllers;
+using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.UI.MainMenu;
 using TournamentManager3000.UI.PlayerMenu;
 using TournamentManager3000.UI.TournamentMenu;
@@ -23,12 +24,12 @@ namespace TournamentManager3000.UI.Helpers
         public string DummyMenuAction(MenuInput input) => "This is a dummy menu action";
 
         public string Exit(MenuInput input) => "See you next time!";
-        public string Help(MenuInput input) => "Available commands ('<XXX>' means required attribute, '<XXX>?' means optional one):\n" +
-                "'help' - shows this message\n" +
+        public string Help(MenuInput input) => CommonMessages.HELP_HEADER +
+                CommonMessages.HELP_OPTION +
                 "'exit' - exits the program\n" +
-                "'player-menu' - opens the player menu\n" +
-                "'tournament-menu' - opens the tournament menu\n" +
-                "'import-export-menu' - opens the import/export menu\n";
+                "'player-menu' - opens the Player menu\n" +
+                "'tournament-menu' - opens the Tournament menu\n" +
+                "'import-export-menu' - opens the Import/Export menu\n";
 
         public MenuData(TournamentController tournamentController, PlayerController playerController, ImportExportController importExportController)
         {
@@ -46,9 +47,10 @@ namespace TournamentManager3000.UI.Helpers
                 {"menu name", tournamentController.MenuName},
                 {"help", tournamentController.Help},
                 {"exit", tournamentController.Exit},
-                {"create-tournament", tournamentController.CreateTournament},
-                {"add-result", tournamentController.AddMatchResult},
+                {"create-tournament", tournamentController.Create},
+                {"add-result", tournamentController.SetMatchWinner},
                 {"show-tournament", tournamentController.ShowTournament},
+                {"show-round", tournamentController.ShowRound},
                 {"list-tournaments", tournamentController.ListTournaments},
             };
 
