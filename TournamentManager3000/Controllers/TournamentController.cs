@@ -61,7 +61,8 @@ namespace TournamentManager3000.Controllers
                 "'add-result <MATCH NUM> <WINNER ID or WINNER NICKNAME>' - sets a winner for a given match (from current tournament)\n" +
                 "'show-tournament <ID>' - shows details about given tournament\n" +
                 "'show-round <TOURNAMENT ID> <ROUND NUM>' - shows deatils about selected round from given tournament\n" +
-                "'list-tournaments' - lists all stored tournaments\n";
+                "'list-tournaments' - lists all stored tournaments\n" +
+                "'delete-tournament <ID>' - deletes tournament with given ID";
         }
 
         public string Exit(MenuInput _)
@@ -71,7 +72,25 @@ namespace TournamentManager3000.Controllers
             {
                 message = $"Ongoing tournament '{_currentTournament.Name}' dropped. " + message;
             }
+            HasTournamentStarted = false;
+            _currentTournament = new Tournament();   // to not store entire tournament in memory for nothing
             return message;
+        }
+
+        public string DeleteTournament(MenuInput input)
+        {
+            var message = "";
+            if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
+
+            var tournamentId = 0;
+            if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
+
+            var tournamentToDelete = new Tournament();
+            if (!TryParseTournament(tournamentId, out tournamentToDelete)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
+
+            _tournamentContext.Tournaments.Remove(tournamentToDelete);
+            _tournamentContext.SaveChanges();
+            return $"Tournament with ID '{tournamentId}' and name '{tournamentToDelete.Name}'" + CommonMessages.SUCC_DEL;
         }
 
         public string ShowTournament(MenuInput input)
@@ -80,15 +99,16 @@ namespace TournamentManager3000.Controllers
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
             int tournamentId = 0;
-            if (!int.TryParse(input[0], out tournamentId)) return "First argument must be a number.";
+            if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
             Tournament tournament = new Tournament();
-            if (!TryParseTournament(tournamentId, out tournament)) return "Tournament with given ID does not exist!";
+            if (!TryParseTournament(tournamentId, out tournament)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
 
             return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>> 
             {
                 {"ID", new List<string>() { tournament.Id.ToString() } },
                 {"Name", new List<string>() { tournament.Name} },
+                {"Description", new List<string> { tournament.Description != null ? tournament.Description : CommonMessages.NO_DESCR } },
                 {"Rounds", new List<string>() { tournament.Rounds.Count.ToString() } },
                 {"Matches", new List<string>() { tournament.Rounds.Select(r => r.Matches.Count).Sum().ToString() } },
                 {"Winner", new List<string>() { tournament.Rounds.Last().Matches.Last().Winner!.Nickname } },
@@ -102,12 +122,35 @@ namespace TournamentManager3000.Controllers
             if (CommonMethods.CheckListLength(input, 2, 2, out message)) return message;
 
             var tournamentId = 0;
-            if (!int.TryParse(input[0], out tournamentId)) return "First argument must be a number.";
+            if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
-            var roundId = 0;
-            if (!int.TryParse(input[1], out roundId)) return "Seconds argument must be a number.";
+            var roundNum = 0;
+            if (!int.TryParse(input[1], out roundNum)) return "SecondL" + CommonMessages.NUM_ARG;
 
+            var tournament = new Tournament();
+            if (!TryParseTournament(tournamentId, out tournament)) return "Tournament with given ID does not exist!";
+
+            if (roundNum < 1 || roundNum > tournament.Rounds.Count) return $"Given round number is out of range for selected Tournament '{tournament.Name}'.";
+
+            return RoundToString(tournament.Rounds[roundNum - 1]);
         }
+
+
+        public string ListTournaments(MenuInput input)
+        {
+            var allStoredTournaments = _tournamentContext.Tournaments.ToList();
+            if (allStoredTournaments.Count == 0) return "No tournaments stored yet.";
+
+            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>
+            {
+                {"ID", allStoredTournaments.Select(t => t.Id.ToString()).ToList() },
+                {"Name", allStoredTournaments.Select(t => t.Name).ToList() },
+                {"Rounds", allStoredTournaments.Select(t => t.Rounds.Count.ToString()).ToList() },
+                {"Matches", allStoredTournaments.Select(t => t.Rounds.Select(r => r.Matches.Count).Sum().ToString()).ToList() },
+                {"Winner", allStoredTournaments.Select(t => PlayerToString(t.Rounds.Last().Matches.Last().Winner!)).ToList() },
+            });
+        }
+
 
         private bool TryParseTournament(int tournamentId, out Tournament tournament)
         {
@@ -136,45 +179,12 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        private bool TryParsePlayer(string idOrNickname, out Player player)
-        {
-            Player? playerOrDefault = null;
-            player = new Player();
-            if (int.TryParse(idOrNickname, out int id))
-            {
-                playerOrDefault = _tournamentContext.Players.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
-                if (playerOrDefault != null)
-                {
-                    player = playerOrDefault;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                playerOrDefault = _tournamentContext.Players.FirstOrDefault(p => p.Nickname == idOrNickname && !p.IsDeleted);
-                if (playerOrDefault != null)
-                {
-                    player = playerOrDefault;
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-        }
-
-
         private bool TryLoadPlayers(List<string> idOrNicknameList, out List<Player> players)
         {
             players = new List<Player>();
             foreach (var idOrNickname in idOrNicknameList)
             {
-                if (TryParsePlayer(idOrNickname, out Player player))
+                if (CommonMethods.TryParsePlayer(idOrNickname, _tournamentContext, out Player player))
                 {
                     players.Add(player);
                 }
@@ -218,13 +228,30 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        private string PlayerToString(Player player, bool autoAdvancePostfix = false)
+        private string PlayerToString(Player player)
+        {
+            return $"ID: '{player.Id}', Nickname: '{player.Nickname}";
+        }
+
+
+        private string RoundToString(Round round)
+        {
+            return $"Round number {round.RoundNumber}:\n\n" + CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<String>>
+            {
+                {"Match number", Enumerable.Range(1, round.Matches.Count).Select(x => x.ToString()).ToList() },
+                {"Player One", round.Matches.Select(m => PlayerToString(m.Player1)).ToList() },
+                {"Player Two", round.Matches.Select(m => m.Player2 != null ? PlayerToString(m.Player2) : "Auto Advance").ToList() },
+                {"Winner", round.Matches.Select(m => m.Winner != null ? PlayerToString(m.Winner) : "No winner yet").ToList() }
+            });
+        }
+
+        /*
+         *         private string PlayerToString(Player player, bool autoAdvancePostfix = false)
         {
             string spaces = "      ";
             return $"{spaces}Id: {player.Id}\n{spaces}Nickname: {player.Nickname}\n" + (autoAdvancePostfix ? $"{spaces}This player auto advances to next round.\n" : "");
         }
-
-
+         * 
         private string RoundToString(Round round)
         {
 
@@ -269,10 +296,9 @@ namespace TournamentManager3000.Controllers
                 sbForIds.AppendLine($"   {paddedPlayer1[0]} vs {paddedPlayer2[0]}");
                 sbForNicknames.AppendLine($"   {paddedPlayer1[1]} vs {paddedPlayer2[1]}");
             }
-            return sb.ToString();*/
+            return sb.ToString();
         }
-
-
+        */
         public string Create(MenuInput input)
         {
             var message = "";
@@ -320,7 +346,7 @@ namespace TournamentManager3000.Controllers
                     {
                         player.Wins += _shadowPlayerStats[player].WinsCount;
                         player.Losses += _shadowPlayerStats[player].LossesCount;
-                        player.MatchesPLayed += _shadowPlayerStats[player].MatchesPlayed;
+                        player.MatchesPlayed += _shadowPlayerStats[player].MatchesPlayed;
                     }
 
                     _tournamentContext.Players.UpdateRange(_shadowPlayerStats.Keys);
@@ -377,7 +403,7 @@ namespace TournamentManager3000.Controllers
 
             Round currentRound = _currentTournament.Rounds.Last();
             if (matchNumber < 0 || matchNumber > currentRound.Matches.Count) return "Invalid match number";
-            if (!TryParsePlayer(input[1], out Player player)) return "Player does not exist";
+            if (!CommonMethods.TryParsePlayer(input[1], _tournamentContext, out Player player)) return "Player does not exist";
 
             var match = currentRound.Matches[matchNumber - 1];
             if (!(match.Player1 == player) && !(match.Player2 == player)) return "Player is not in the selected match";

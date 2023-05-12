@@ -14,5 +14,12 @@ namespace TournamentManager3000
         public DbSet<Models.Player> Players { get; set; }
         public DbSet<Models.Match> Matches { get; set; }
         public DbSet<Models.Round> Rounds { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder.Entity<Player>()
+                .HasIndex(u => u.Nickname)
+                .IsUnique();
+        }
     }
 }

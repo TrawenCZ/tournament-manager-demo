@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TournamentManager3000.Models;
 
 namespace TournamentManager3000.Controllers.Helpers
 {
@@ -86,6 +87,39 @@ namespace TournamentManager3000.Controllers.Helpers
             }
 
             return tableBuilder.ToString();
+        }
+
+
+        public static bool TryParsePlayer(string idOrNickname, TournamentContext tournamentContext, out Player player)
+        {
+            Player? playerOrDefault = null;
+            player = new Player();
+            if (int.TryParse(idOrNickname, out int id))
+            {
+                playerOrDefault = tournamentContext.Players.FirstOrDefault(p => p.Id == id && !p.IsDeleted);
+                if (playerOrDefault != null)
+                {
+                    player = playerOrDefault;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                playerOrDefault = tournamentContext.Players.FirstOrDefault(p => p.Nickname == idOrNickname && !p.IsDeleted);
+                if (playerOrDefault != null)
+                {
+                    player = playerOrDefault;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
         }
 
     }
