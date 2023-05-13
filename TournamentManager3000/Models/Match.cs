@@ -16,8 +16,5 @@ namespace TournamentManager3000.Models
 
         public int? WinnerId { get; set; }
         public Player? Winner { get; set; }
-
-        public int RoundId { get; set; }
-        public Round Round { get; set; }
     }
 }

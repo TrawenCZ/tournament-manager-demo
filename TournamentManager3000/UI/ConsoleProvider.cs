@@ -24,6 +24,7 @@ namespace TournamentManager3000.UI
         {
             bool shouldContinue = true;
             bool inSubmenu = false;
+            bool changeInSubmenuAtTheEnd = false;
             string messageToPrint = "";
             List<string> filler = new List<string>();
             Task<string> taskForActions = Task.Run(() => "");
@@ -31,14 +32,13 @@ namespace TournamentManager3000.UI
             SubmenuCommandDictionary currentSubmenuData = data.TournamentMenuCommands;
             CommandDictionary mainMenuData = data.MainMenuCommands;
 
-            MenuAction subMenuAction = currentSubmenuData["exit"];
-            (SubmenuCommandDictionary? menuToSwitch, MenuAction action) mainMenuAction = mainMenuData["exit"];
-
+            Console.WriteLine("Welcome to TournamentManager3000 - the best and most powerful tournament manager yet.\nLet's start with list of available commands in Main menu:\n\n" + mainMenuData["help"].action(filler));
+            
 
             while (shouldContinue)
             {
                 string currMenuName = inSubmenu ? currentSubmenuData["menu name"](filler) : "Main";    // sorry for this ugly trick, but it's effective
-                Console.Write($"[{currMenuName} menu]> ");
+                Console.Write($"\n[{currMenuName} menu]> ");
 
                 var input = Console.ReadLine();
                 if (input == null) continue;
@@ -49,46 +49,57 @@ namespace TournamentManager3000.UI
                     continue;
                 }
 
+                Console.WriteLine();
                 string command = splittedInput[0].ToLower();
                 List<string> argumentsToPass = splittedInput.Skip(1).ToList();
 
                 if (command == "exit")
                 {
-                    Console.WriteLine($"Are you sure you want {(inSubmenu ? currMenuName + "menu" : "program")}? (Yes/No)");
+                    Console.WriteLine($"Are you sure you want {(inSubmenu ? currMenuName + " menu" : "program")}? (Yes/No)");
                     var answer = Console.ReadLine();
                     if (answer?.ToLower() != "yes" && answer?.ToLower() != "y") continue;
-                    inSubmenu = false;
-                    shouldContinue = false;
+                    shouldContinue = inSubmenu;
+                    changeInSubmenuAtTheEnd = true;
                 }
 
                 CancellationTokenSource ctsForLoading = new CancellationTokenSource();
 
                 if (inSubmenu)
                 {
-                    if (!currentSubmenuData.TryGetValue(command, out subMenuAction!)) messageToPrint = "Unrecognized action.\n" + currentSubmenuData["help"](filler);
-                    else taskForActions = Task.Run(() => currentSubmenuData[command](argumentsToPass));
-                } else
+                    if (currentSubmenuData.TryGetValue(command, out var subMenuAction)) taskForActions = Task.Run(() => subMenuAction!(argumentsToPass));
+                    else taskForActions = Task.Run(() => "Unrecognized action.\n\n" + currentSubmenuData["help"](filler));
+                } else if (mainMenuData.TryGetValue(command, out var mainMenuAction))
                 {
-                    if (!mainMenuData.TryGetValue(command, out mainMenuAction)) messageToPrint = "Unrecognized action.\n" + mainMenuData["help"].action(filler);
-                    else if (mainMenuAction.menuToSwitch != null)
+                    if (mainMenuAction.menuToSwitch != null)
                     {
                         currentSubmenuData = mainMenuAction.menuToSwitch;
                         currMenuName = currentSubmenuData["menu name"](filler);
-                        messageToPrint = currentSubmenuData["help"](filler);
+                        taskForActions = Task.Run(() => $"Welcome to {currMenuName} menu.\n\n" + currentSubmenuData["help"](filler));
                         inSubmenu = true;
-                    } else {
+                    } else
+                    {
                         taskForActions = Task.Run(() => mainMenuAction.action(argumentsToPass));
                     }
+                } else
+                {
+                    taskForActions = Task.Run(() => "Unrecognized action.\n\n" + mainMenuData["help"].action(filler));
                 }
                 Task spinningAnimation = _loadingSpinner.Start(ctsForLoading.Token);
                 messageToPrint = await taskForActions;
                 ctsForLoading.Cancel();
                 await spinningAnimation;
 
+                if (changeInSubmenuAtTheEnd)
+                {
+                    inSubmenu = false;
+                    changeInSubmenuAtTheEnd = false;
+                }
+
                 Console.WriteLine(messageToPrint);
             }
         }
 
+        /*
         public List<string> ReadAndSplitLine(string message)
         {
             Console.WriteLine(message);
@@ -96,5 +107,6 @@ namespace TournamentManager3000.UI
             if (inputLine == null) return new List<string>();
             return new List<string>(Regex.Replace(inputLine, @"\s+", " ").Trim().Split());
         }
+        */
     }
 }

@@ -30,14 +30,6 @@ namespace TournamentManager3000.UI.Helpers
 
         public MenuData(TournamentController tournamentController, PlayerController playerController, ImportExportController importExportController)
         {
-            MainMenuCommands = new CommandDictionary()
-            {
-                {"help", (null, this.Help)},
-                {"exit", (null, this.Exit)},
-                {"player-menu", (PlayerMenuCommands, DummyMenuAction)},
-                {"tournament-menu", (TournamentMenuCommands, DummyMenuAction)},
-                {"import-export-menu", (ImportExportMenuCommands, DummyMenuAction)},
-            };
 
             TournamentMenuCommands = new SubmenuCommandDictionary()
             {
@@ -49,6 +41,7 @@ namespace TournamentManager3000.UI.Helpers
                 {"show-tournament", tournamentController.ShowTournament},
                 {"show-round", tournamentController.ShowRound},
                 {"list-tournaments", tournamentController.ListTournaments},
+                {"delete-tournament", tournamentController.DeleteTournament}
             };
 
             PlayerMenuCommands = new SubmenuCommandDictionary()
@@ -59,8 +52,21 @@ namespace TournamentManager3000.UI.Helpers
                 {"create-player", playerController.CreatePlayer},
                 {"show-player", playerController.ShowPlayer},
                 {"list-players", playerController.ListPlayers},
+                {"delete-player", playerController.DeletePlayer}
             };
 
+            MainMenuCommands = new CommandDictionary()
+            {
+                {"help", (null, this.Help)},
+                {"exit", (null, this.Exit)},
+                {"player-menu", (PlayerMenuCommands, DummyMenuAction)},
+                {"tournament-menu", (TournamentMenuCommands, DummyMenuAction)},
+                {"import-export-menu", (ImportExportMenuCommands, DummyMenuAction)},
+            };
+
+            ImportExportMenuCommands = new SubmenuCommandDictionary();
+
+            /*
             ImportExportMenuCommands = new SubmenuCommandDictionary()
             {
                 {"menu name", importExportController.MenuName},
@@ -71,6 +77,7 @@ namespace TournamentManager3000.UI.Helpers
                 {"export-empty-tournament-schema", importExportController.ExportEmptyTournamentSchema},
                 {"export-existing-tournament-schema", importExportController.ExportExistingTournamentSchema},
             };
+            */
         }
     }
 }

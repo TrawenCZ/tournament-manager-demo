@@ -16,7 +16,6 @@ namespace TournamentManager3000.UI.Helpers
             _ct = ct;
             _counter = 0;
             Console.CursorVisible = false;
-            Console.Write(" ");
             await Spin();
         }
 

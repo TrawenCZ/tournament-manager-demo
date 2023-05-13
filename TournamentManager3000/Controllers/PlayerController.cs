@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using TournamentManager3000.Controllers.Helpers;
+using TournamentManager3000.Data;
 using TournamentManager3000.Models;
 using TournamentManager3000.UI;
 
@@ -66,7 +67,7 @@ namespace TournamentManager3000.Controllers
         public string ShowPlayer(MenuInput input)
         {
             var message = "";
-            if (!CommonMethods.CheckListLength(input, 1, 2, out message)) return message;
+            if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
             var player = new Player();
             if (!CommonMethods.TryParsePlayer(input[0], _tournamentContext, out player)) return "Player with given ID/nickname does not exist!";

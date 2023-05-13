@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TournamentManager3000.Data;
 using TournamentManager3000.Models;
 
 namespace TournamentManager3000.Controllers.Helpers
@@ -57,9 +58,10 @@ namespace TournamentManager3000.Controllers.Helpers
 
             // Build the table header
             StringBuilder tableBuilder = new StringBuilder();
-            foreach (string columnName in data.Keys)
+            var colNames = data.Keys.ToList();
+            for (int j = 0; j < colNames.Count; j++)
             {
-                tableBuilder.Append(columnName.PadRight(columnWidths[i], ' '));
+                tableBuilder.Append(colNames[j].PadRight(columnWidths[j]));
                 tableBuilder.Append(" | ");
             }
             tableBuilder.Remove(tableBuilder.Length - 3, 3); // Remove the last separator and trailing space
@@ -77,9 +79,10 @@ namespace TournamentManager3000.Controllers.Helpers
             // Build the data rows
             for (int row = 0; row < numRows; row++)
             {
-                foreach (string columnName in data.Keys)
+                for (int j = 0; j < colNames.Count; j++)
                 {
-                    tableBuilder.Append(data[columnName][row].PadRight(columnWidths[i], ' '));
+                    var colName = colNames[j];
+                    tableBuilder.Append(data[colName][row].PadRight(columnWidths[j]));
                     tableBuilder.Append(" | ");
                 }
                 tableBuilder.Remove(tableBuilder.Length - 3, 3); // Remove the last separator and trailing space

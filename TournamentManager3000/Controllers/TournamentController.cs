@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TournamentManager3000.Controllers.Helpers;
+using TournamentManager3000.Data;
 using TournamentManager3000.Models;
 using TournamentManager3000.UI;
 
@@ -57,7 +59,7 @@ namespace TournamentManager3000.Controllers
             return CommonMessages.HELP_HEADER +
                 CommonMessages.HELP_OPTION +
                 "'exit' - exits Tournament menu\n" +
-                "'create-tournament <NAME> <DESCRIPTION>?' - creates new tournament.\n" +
+                "'create-tournament <NAME> <list of player ID/nicknames>' - creates new tournament with given players specified by their ID or nickname (separate with spaces)\n" +
                 "'add-result <MATCH NUM> <WINNER ID or WINNER NICKNAME>' - sets a winner for a given match (from current tournament)\n" +
                 "'show-tournament <ID>' - shows details about given tournament\n" +
                 "'show-round <TOURNAMENT ID> <ROUND NUM>' - shows deatils about selected round from given tournament\n" +
@@ -108,7 +110,6 @@ namespace TournamentManager3000.Controllers
             {
                 {"ID", new List<string>() { tournament.Id.ToString() } },
                 {"Name", new List<string>() { tournament.Name} },
-                {"Description", new List<string> { tournament.Description != null ? tournament.Description : CommonMessages.NO_DESCR } },
                 {"Rounds", new List<string>() { tournament.Rounds.Count.ToString() } },
                 {"Matches", new List<string>() { tournament.Rounds.Select(r => r.Matches.Count).Sum().ToString() } },
                 {"Winner", new List<string>() { tournament.Rounds.Last().Matches.Last().Winner!.Nickname } },
@@ -125,7 +126,7 @@ namespace TournamentManager3000.Controllers
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
             var roundNum = 0;
-            if (!int.TryParse(input[1], out roundNum)) return "SecondL" + CommonMessages.NUM_ARG;
+            if (!int.TryParse(input[1], out roundNum)) return "Second" + CommonMessages.NUM_ARG;
 
             var tournament = new Tournament();
             if (!TryParseTournament(tournamentId, out tournament)) return "Tournament with given ID does not exist!";
@@ -138,7 +139,7 @@ namespace TournamentManager3000.Controllers
 
         public string ListTournaments(MenuInput input)
         {
-            var allStoredTournaments = _tournamentContext.Tournaments.ToList();
+            var allStoredTournaments = _tournamentContext.Tournaments.Include(t => t.Rounds).ThenInclude(r => r.Matches).ThenInclude(m => m.Winner).ToList();
             if (allStoredTournaments.Count == 0) return "No tournaments stored yet.";
 
             return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>
@@ -230,7 +231,7 @@ namespace TournamentManager3000.Controllers
 
         private string PlayerToString(Player player)
         {
-            return $"ID: '{player.Id}', Nickname: '{player.Nickname}";
+            return $"ID: '{player.Id}', Nickname: '{player.Nickname}'";
         }
 
 
@@ -303,22 +304,19 @@ namespace TournamentManager3000.Controllers
         {
             var message = "";
             if (!CheckOngoingTournament(false, out message)) return message;
-            if (!CommonMethods.CheckListLength(input, 1, 2, out message)) return message;
+            if (!CommonMethods.CheckListLength(input, 2, int.MaxValue, out message)) return message;
 
-            List<string> consoleInput = _consoleProvider.ReadAndSplitLine("Please write the nicknames or ids of the players you want to add to the tournament. Separate them with a space. (e.g. 1 XxProPlayerxX 94 jozkobeznozko):");
-            if (!CommonMethods.CheckListLength(consoleInput, 2, int.MaxValue, out message)) return message;
-
+            List<string> playerIdsOrNicknames = input.Skip(1).ToList();
             List<Player> players = new List<Player>();
-            if (!TryLoadPlayers(consoleInput, out players)) return $"Given argument at position {players.Count} ('{players.Last()}') is not valid ID nor nickname.";
+            if (!TryLoadPlayers(playerIdsOrNicknames, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";
             if (ContainsDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
 
             string tournamentName = input[0];
-            string? description = input.Count == 2 ? input[1] : null;
 
             _shadowPlayerStats = players.ToDictionary(p => p, p => (0, 0, 0));
             _remainingPlayers = players;
             RandomInsertDummies();
-            _currentTournament = new Tournament() { Name = tournamentName, Description = description };
+            _currentTournament = new Tournament() { Name = tournamentName };
             HasTournamentStarted = true;
 
             Round newRound = StartNewRound();
@@ -349,7 +347,7 @@ namespace TournamentManager3000.Controllers
                         player.MatchesPlayed += _shadowPlayerStats[player].MatchesPlayed;
                     }
 
-                    _tournamentContext.Players.UpdateRange(_shadowPlayerStats.Keys);
+                    _tournamentContext.Players.UpdateRange(_shadowPlayerStats.Keys.ToList());
 
                     _tournamentContext.SaveChanges();
 
@@ -373,7 +371,7 @@ namespace TournamentManager3000.Controllers
             var newMatch = new Models.Match();
             if (_currentTournament.Rounds.Count == 0)
             {
-                for (int i = 0; i < numOfPlayers * 2; i += 2)
+                for (int i = 0; i < numOfPlayers; i += 2)
                 {
                     newMatch = new Models.Match() { Player1 = _remainingPlayers[i], Player2 = (_remainingPlayers[i + 1] == _dummyPlayer ? null : _remainingPlayers[i + 1]) };
                     newMatches.Add(newMatch);
@@ -381,7 +379,7 @@ namespace TournamentManager3000.Controllers
             } else
             {
                 List<Models.Match> currRoundMatches = _currentTournament.Rounds.Last().Matches;
-                for (int i = 0; i < currRoundMatches.Count * 2; i += 2)
+                for (int i = 0; i < currRoundMatches.Count; i += 2)
                 {
                     newMatch = new Models.Match() { Player1 = currRoundMatches[i].Winner!, Player2 = currRoundMatches[i + 1].Winner! };
                     newMatches.Add(newMatch);
