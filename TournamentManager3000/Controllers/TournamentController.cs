@@ -19,6 +19,7 @@ namespace TournamentManager3000.Controllers
     {
         private readonly TournamentContext _tournamentContext;
         private readonly ConsoleProvider _consoleProvider;
+        private readonly TournamentCreator _tournamentCreator;
         private Tournament _currentTournament = new Tournament();
         private List<Player> _remainingPlayers = new List<Player>();
         private Player _dummyPlayer = new Player() { Id = -1, Nickname = "Dummy" };
@@ -26,9 +27,10 @@ namespace TournamentManager3000.Controllers
         public bool HasTournamentStarted { get; private set; } = false;
 
 
-        public TournamentController(TournamentContext tournamentContext, ConsoleProvider consoleProvider)
+        public TournamentController(TournamentContext tournamentContext, TournamentCreator tournamentCreator, ConsoleProvider consoleProvider)
         {
             _tournamentContext = tournamentContext;
+            _tournamentCreator = tournamentCreator;
             _consoleProvider = consoleProvider;
         }
 
@@ -88,7 +90,7 @@ namespace TournamentManager3000.Controllers
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
             var tournamentToDelete = new Tournament();
-            if (!TryParseTournament(tournamentId, out tournamentToDelete)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
+            if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournamentToDelete)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
 
             _tournamentContext.Tournaments.Remove(tournamentToDelete);
             _tournamentContext.SaveChanges();
@@ -104,7 +106,7 @@ namespace TournamentManager3000.Controllers
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
             Tournament tournament = new Tournament();
-            if (!TryParseTournament(tournamentId, out tournament)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
+            if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournament)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
 
             return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>> 
             {
@@ -129,7 +131,7 @@ namespace TournamentManager3000.Controllers
             if (!int.TryParse(input[1], out roundNum)) return "Second" + CommonMessages.NUM_ARG;
 
             var tournament = new Tournament();
-            if (!TryParseTournament(tournamentId, out tournament)) return "Tournament with given ID does not exist!";
+            if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournament)) return "Tournament with given ID does not exist!";
 
             if (roundNum < 1 || roundNum > tournament.Rounds.Count) return $"Given round number is out of range for selected Tournament '{tournament.Name}'.";
 
@@ -150,82 +152,6 @@ namespace TournamentManager3000.Controllers
                 {"Matches", allStoredTournaments.Select(t => t.Rounds.Select(r => r.Matches.Count).Sum().ToString()).ToList() },
                 {"Winner", allStoredTournaments.Select(t => PlayerToString(t.Rounds.Last().Matches.Last().Winner!)).ToList() },
             });
-        }
-
-
-        private bool TryParseTournament(int tournamentId, out Tournament tournament)
-        {
-            tournament = new Tournament();
-            var tournamentLoaded = _tournamentContext.Tournaments.FirstOrDefault(t => t.Id == tournamentId);
-            if (tournamentLoaded != null)
-            {
-                tournament = tournamentLoaded;
-                return true;
-            } else return false;
-        }
-
-
-        private void Shuffle(List<Player> list)
-        {
-            Random rng = new Random();
-            int n = list.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = rng.Next(n + 1);
-                Player value = list[k];
-                list[k] = list[n];
-                list[n] = value;
-            }
-        }
-
-
-        private bool TryLoadPlayers(List<string> idOrNicknameList, out List<Player> players)
-        {
-            players = new List<Player>();
-            foreach (var idOrNickname in idOrNicknameList)
-            {
-                if (CommonMethods.TryParsePlayer(idOrNickname, _tournamentContext, out Player player))
-                {
-                    players.Add(player);
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-
-        private bool ContainsDuplicate(List<Player> players, out Player duplicate)
-        {
-            duplicate = new Player();
-            var duplicates = players.GroupBy(x => x)
-                .Where(g => g.Count() > 1)
-                .Select(y => y.Key)
-                .ToList();
-            if (duplicates.Count > 0)
-            {
-                duplicate = duplicates[0];
-                return true;
-            }
-            return false;
-        }
-
-
-        private void RandomInsertDummies()
-        {
-            int numOfPlayers = _remainingPlayers.Count;
-
-            // closest power of 2 higher than numOfPlayers
-            int numOfDummyPlayers = (int)Math.Pow(2, Math.Ceiling(Math.Log(numOfPlayers, 2))) - numOfPlayers;
-
-            Shuffle(_remainingPlayers);
-            for (int i = 0; i < numOfDummyPlayers * 2; i += 2)
-            {
-                _remainingPlayers.Insert(i + 1, _dummyPlayer);
-            }
         }
 
 
@@ -304,23 +230,21 @@ namespace TournamentManager3000.Controllers
         {
             var message = "";
             if (!CheckOngoingTournament(false, out message)) return message;
-            if (!CommonMethods.CheckListLength(input, 2, int.MaxValue, out message)) return message;
+            if (!CommonMethods.CheckListLength(input, 3, int.MaxValue, out message)) return message;
 
             List<string> playerIdsOrNicknames = input.Skip(1).ToList();
             List<Player> players = new List<Player>();
-            if (!TryLoadPlayers(playerIdsOrNicknames, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";
-            if (ContainsDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
+            if (!_tournamentCreator.TryLoadPlayers(playerIdsOrNicknames, _tournamentContext, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";
+            if (_tournamentCreator.ContainsDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
 
             string tournamentName = input[0];
 
             _shadowPlayerStats = players.ToDictionary(p => p, p => (0, 0, 0));
-            _remainingPlayers = players;
-            RandomInsertDummies();
-            _currentTournament = new Tournament() { Name = tournamentName };
+            _currentTournament = _tournamentCreator.CreateTournamentAndFirstRound(players, tournamentName);
+
             HasTournamentStarted = true;
 
-            Round newRound = StartNewRound();
-            return $"Tournament '{tournamentName}' started. You can add match result by 'add-result' command. Type 'help' for more information.\n" + RoundToString(newRound);
+            return $"Tournament '{tournamentName}' started. You can add match result by 'add-result' command. Type 'help' for more information.\n" + RoundToString(_currentTournament.Rounds.First());
         }
 
 
@@ -360,36 +284,8 @@ namespace TournamentManager3000.Controllers
                 }
             }
 
+            HasTournamentStarted = false;
             return $"\nTournament has ended and has been saved with ID '{_currentTournament.Id}'.\nAbsolute winner is {winnerNickname}. Congratulations!\n";
-        }
-
-
-        private Round StartNewRound()
-        {
-            var newMatches = new List<Models.Match>();
-            int numOfPlayers = _remainingPlayers.Count;
-            var newMatch = new Models.Match();
-            if (_currentTournament.Rounds.Count == 0)
-            {
-                for (int i = 0; i < numOfPlayers; i += 2)
-                {
-                    newMatch = new Models.Match() { Player1 = _remainingPlayers[i], Player2 = (_remainingPlayers[i + 1] == _dummyPlayer ? null : _remainingPlayers[i + 1]) };
-                    newMatches.Add(newMatch);
-                }
-            } else
-            {
-                List<Models.Match> currRoundMatches = _currentTournament.Rounds.Last().Matches;
-                for (int i = 0; i < currRoundMatches.Count; i += 2)
-                {
-                    newMatch = new Models.Match() { Player1 = currRoundMatches[i].Winner!, Player2 = currRoundMatches[i + 1].Winner! };
-                    newMatches.Add(newMatch);
-                    _remainingPlayers.Remove(currRoundMatches[i].Player2 == currRoundMatches[i].Winner ? currRoundMatches[i].Player2! : currRoundMatches[i].Player1);
-                    _remainingPlayers.Remove(currRoundMatches[i].Player2 == currRoundMatches[i].Winner ? currRoundMatches[i].Player2! : currRoundMatches[i].Player1);
-                }
-            }
-            var round = new Round() { Matches = newMatches, RoundNumber = _currentTournament.Rounds.Count + 1 };
-            _currentTournament.Rounds.Add(round);
-            return round;
         }
 
 
@@ -422,7 +318,7 @@ namespace TournamentManager3000.Controllers
 
             if (!currentRound.Matches.Any(m => m.Winner == null))
             {
-                Round newRound = StartNewRound();
+                Round newRound = _tournamentCreator.StartNewRound(_currentTournament);
 
                 return outputString + $"Round {currentRound.RoundNumber} ended. Starting new round:\n" + RoundToString(newRound);
             }
