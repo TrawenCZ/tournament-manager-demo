@@ -18,11 +18,8 @@ namespace TournamentManager3000.Controllers
     public class TournamentController
     {
         private readonly TournamentContext _tournamentContext;
-        private readonly ConsoleProvider _consoleProvider;
         private readonly TournamentCreator _tournamentCreator;
         private Tournament _currentTournament = new Tournament();
-        private List<Player> _remainingPlayers = new List<Player>();
-        private Player _dummyPlayer = new Player() { Id = -1, Nickname = "Dummy" };
         private Dictionary<Player, (int WinsCount, int LossesCount, int MatchesPlayed)> _shadowPlayerStats = new Dictionary<Player, (int WinsCount, int LossesCount, int MatchesPlayed)>();
         public bool HasTournamentStarted { get; private set; } = false;
 
@@ -31,7 +28,6 @@ namespace TournamentManager3000.Controllers
         {
             _tournamentContext = tournamentContext;
             _tournamentCreator = tournamentCreator;
-            _consoleProvider = consoleProvider;
         }
 
 
@@ -54,22 +50,22 @@ namespace TournamentManager3000.Controllers
             }
         }
 
-        public string MenuName(MenuInput _) => "Tournament";
+        public string MenuName(MenuInput _) => "Tournament menu";
 
         public string Help(MenuInput _)
         {
             return CommonMessages.HELP_HEADER +
                 CommonMessages.HELP_OPTION +
-                "'exit' - exits Tournament menu\n" +
                 "'create-tournament <NAME> <list of player ID/nicknames>' - creates new tournament with given players specified by their ID or nickname (separate with spaces)\n" +
                 "'add-result <MATCH NUM> <WINNER ID or WINNER NICKNAME>' - sets a winner for a given match (from current tournament)\n" +
                 "'show-tournament <ID>' - shows details about given tournament\n" +
                 "'show-round <TOURNAMENT ID> <ROUND NUM>' - shows deatils about selected round from given tournament\n" +
                 "'list-tournaments' - lists all stored tournaments\n" +
-                "'delete-tournament <ID>' - deletes tournament with given ID";
+                "'delete-tournament <ID>' - deletes tournament with given ID" +
+                CommonMessages.BACK_TO_MAIN;
         }
 
-        public string Exit(MenuInput _)
+        public string Back(MenuInput _)
         {
             string message = "Exiting Tournament menu.";
             if (HasTournamentStarted)

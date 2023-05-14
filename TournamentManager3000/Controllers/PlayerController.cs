@@ -22,7 +22,7 @@ namespace TournamentManager3000.Controllers
             _tournamentContext = tournamentContext;
         }
 
-        public string MenuName(MenuInput input) => "Player";
+        public string MenuName(MenuInput input) => "Player menu";
 
         public string Help(MenuInput input)
         {
@@ -31,10 +31,11 @@ namespace TournamentManager3000.Controllers
                 "'create-player <NICKNAME> <DESCRIPTION>?' - creates a player with given unique nickname and possible description\n" +
                 "'show-player <ID or NICKNAME>' - shows details about player with given ID/nickname\n" +
                 "'list-players' - lists all stored players\n" +
-                "'delete-player <ID or NICKNAME>' - deletes player with given ID/nickname\n";
+                "'delete-player <ID or NICKNAME>' - deletes player with given ID/nickname\n" +
+                CommonMessages.BACK_TO_MAIN;
         }
 
-        public string Exit(MenuInput _) => "Leaving Player menu";
+        public string Back(MenuInput _) => "Leaving Player menu";
 
         public string CreatePlayer(MenuInput input)
         {
@@ -89,17 +90,7 @@ namespace TournamentManager3000.Controllers
         {
             var allStoredPlayers = _tournamentContext.Players.ToList();
             if (allStoredPlayers.Count == 0) return "No players stored yet.";
-            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>()
-            {
-                {"ID", allStoredPlayers.Select(p => p.Id.ToString()).ToList() },
-                {"Nickname", allStoredPlayers.Select(p => p.Nickname).ToList() },
-                {"Description", allStoredPlayers.Select(p => p.Description != null ? p.Description : CommonMessages.NO_DESCR).ToList() },
-                {"Total Wins", allStoredPlayers.Select(p => p.Wins.ToString()).ToList() },
-                {"Total Losses", allStoredPlayers.Select(p => p.Losses.ToString()).ToList() },
-                {"Matches played", allStoredPlayers.Select(p => p.MatchesPlayed.ToString()).ToList() },
-                {"Win / Loss ratio", allStoredPlayers.Select(p => p.Losses == 0 ? "No losses yet" : (p.Wins / p.Losses).ToString()).ToList() },
-                {"Win / Match ratio", allStoredPlayers.Select(p => p.MatchesPlayed == 0 ? "No matches played yet" : (p.Wins / p.MatchesPlayed).ToString()).ToList() },
-            });
+            return CommonMethods.ListPlayers(allStoredPlayers);
         }
     }
 }

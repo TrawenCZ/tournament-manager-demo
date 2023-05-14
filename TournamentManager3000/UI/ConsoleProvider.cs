@@ -38,7 +38,7 @@ namespace TournamentManager3000.UI
             while (shouldContinue)
             {
                 string currMenuName = inSubmenu ? currentSubmenuData["menu name"](filler) : "Main";    // sorry for this ugly trick, but it's effective
-                Console.Write($"\n[{currMenuName} menu]> ");
+                Console.Write($"\n[{(inSubmenu ? currentSubmenuData["menu name"](filler) : "Main menu")}]> ");
 
                 var input = Console.ReadLine();
                 if (input == null) continue;
@@ -53,11 +53,14 @@ namespace TournamentManager3000.UI
                 string command = splittedInput[0].ToLower();
                 List<string> argumentsToPass = splittedInput.Skip(1).ToList();
 
-                if (command == "exit")
+                if (command == "exit" && !inSubmenu)
                 {
-                    Console.WriteLine($"Are you sure you want {(inSubmenu ? currMenuName + " menu" : "program")}? (Yes/No)");
+                    Console.WriteLine($"Are you sure you want to exit program? (Yes/No)");
                     var answer = Console.ReadLine();
                     if (answer?.ToLower() != "yes" && answer?.ToLower() != "y") continue;
+                    return;
+                } else if (command == "back" && inSubmenu)
+                {
                     shouldContinue = inSubmenu;
                     changeInSubmenuAtTheEnd = true;
                 }

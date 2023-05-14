@@ -15,5 +15,6 @@ namespace TournamentManager3000.Controllers.Helpers
         public static readonly string ID_NOT_FOUND = " with given ID does not exist!";
         public static readonly string SUCC_DEL = " was successfuly deleted.";
         public static readonly string NO_DESCR = "No description provided.";
+        public static readonly string BACK_TO_MAIN = "'back' - returns to main menu\n";
     }
 }

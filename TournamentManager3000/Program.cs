@@ -1,6 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Collections.Generic;
 using TournamentManager3000.Controllers;
+using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.Data;
 using TournamentManager3000.Models;
 using TournamentManager3000.UI;
@@ -19,11 +20,12 @@ namespace TournamentManager3000
             try
             {
                 ConsoleProvider consoleProvider = new ConsoleProvider();
+                TournamentCreator tournamentCreator = new TournamentCreator();
                 using (var context = new TournamentContext())
                 {
-                    TournamentController tournamentController = new TournamentController(context, consoleProvider);
+                    TournamentController tournamentController = new TournamentController(context, tournamentCreator, consoleProvider);
                     PlayerController playerController = new PlayerController(context);
-                    ImportExportController importExportController = new ImportExportController(context);
+                    ImportExportController importExportController = new ImportExportController(context, tournamentCreator);
 
                     MenuData menuData = new MenuData(tournamentController, playerController, importExportController);
                     await consoleProvider.CommunicateWithUser(menuData);

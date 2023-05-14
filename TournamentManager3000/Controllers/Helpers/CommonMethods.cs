@@ -125,5 +125,20 @@ namespace TournamentManager3000.Controllers.Helpers
             }
         }
 
+        public static string ListPlayers(List<Player> players)
+        {
+            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>()
+            {
+                {"ID", players.Select(p => p.Id.ToString()).ToList() },
+                {"Nickname", players.Select(p => p.Nickname).ToList() },
+                {"Description", players.Select(p => p.Description != null ? p.Description : CommonMessages.NO_DESCR).ToList() },
+                {"Total Wins", players.Select(p => p.Wins.ToString()).ToList() },
+                {"Total Losses", players.Select(p => p.Losses.ToString()).ToList() },
+                {"Matches played", players.Select(p => p.MatchesPlayed.ToString()).ToList() },
+                {"Win / Loss ratio", players.Select(p => p.Losses == 0 ? "No losses yet" : (p.Wins / p.Losses).ToString()).ToList() },
+                {"Win / Match ratio", players.Select(p => p.MatchesPlayed == 0 ? "No matches played yet" : (p.Wins / p.MatchesPlayed).ToString()).ToList() },
+            });
+        }
+
     }
 }

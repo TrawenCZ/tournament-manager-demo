@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -133,7 +134,14 @@ namespace TournamentManager3000.Controllers.Helpers
         public bool TryParseTournament(int tournamentId, TournamentContext tournamentContext, out Tournament tournament)
         {
             tournament = new Tournament();
-            var tournamentLoaded = tournamentContext.Tournaments.FirstOrDefault(t => t.Id == tournamentId);
+            var tournamentLoaded = tournamentContext.Tournaments
+                .Include(t => t.Rounds)
+                    .ThenInclude(r => r.Matches)
+                        .ThenInclude(m => m.Player1)
+                .Include(t => t.Rounds)
+                    .ThenInclude(r => r.Matches)
+                        .ThenInclude(m => m.Player2)
+                 .FirstOrDefault(t => t.Id == tournamentId);
             if (tournamentLoaded != null)
             {
                 tournament = tournamentLoaded;
