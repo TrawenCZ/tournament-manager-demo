@@ -100,32 +100,107 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        private string RoundToSchema(Round? round, Round? prevRound, int maxNameLength, List<int> previousIndents)
+        private string FormatName(string name, int maxNameLength)
+        {
+            return $"[ {name} ]" + new string('-', maxNameLength - name.Length);
+        }
+
+
+        private StringBuilder RoundToSchema(Round? round, Round? prevRound, int maxNameLength, List<int> prevMiddles)
         {
             StringBuilder sb = new StringBuilder();
-            string horizontalLine = new string('-', 4);
-            string verticalLine = "|";
-            List<int> currIndents = new List<int>();
+            int horizontalLineLength = 5;
+            int writeLength = maxNameLength + 4 + horizontalLineLength; // 4 for brackets and spaces around name
+            int totalLength = writeLength + horizontalLineLength;
+            string endFillament = new string(' ', totalLength - writeLength);
+            string horizontalLine = new string('-', horizontalLineLength - 1);
+            string regHorizontalLine = horizontalLine + "+" + endFillament;
+            string endingHorizontalLine = new string(' ', writeLength - 1) + "+" + horizontalLine;
+
+            string verticalLine = new string(' ', writeLength - 1) + "|" + endFillament;
+            string emptyLine = new string(' ', totalLength);
+
+            List<int> currNameIndexes = new List<int>();
             string? fillement = null;
             if (round == null) fillement = new string(' ', maxNameLength);
 
-            for (int i = 0; i < previousIndents.Count; i++)
+            for (int i = 0; i < prevMiddles[0]; i++) sb.AppendLine(emptyLine);
+            if (prevMiddles.Count == 1)
+            {
+                sb.AppendLine($"{{ {(fillement == null ? prevRound!.Matches.First().Winner!.Nickname : fillement)} }}");
+                for (int i = 0; i < prevMiddles[0]; i++) sb.AppendLine(emptyLine);
+                return sb;
+            }
+
+            for (int i = 0; i < prevMiddles.Count; i += (prevRound == null ? 1 : 2))
             {
                 if (fillement != null)
                 {
-
-                }
-                if (match.Player2 == null)
+                    sb.AppendLine(FormatName(fillement, maxNameLength) + regHorizontalLine);
+                } else if (prevRound == null)
                 {
-                    sb.AppendLine(match.Player1.Nickname.PadRight(maxNameLength));
+                    sb.AppendLine(FormatName(round!.Matches[i].Player1.Nickname, maxNameLength) + regHorizontalLine);
+                } else
+                {
+                    sb.AppendLine(FormatName(prevRound!.Matches[i].Winner!.Nickname, maxNameLength) + regHorizontalLine);
+                }
+
+                var newGap = prevMiddles[i] - prevMiddles[i + 1];
+                var newMiddle = newGap / 2;
+                currNameIndexes.Add(prevMiddles[i] + newMiddle);
+                var verticalLineCount = newMiddle - 1;
+
+                for (int j = 0; j < verticalLineCount; j++) sb.AppendLine(verticalLine);
+                sb.AppendLine(endingHorizontalLine);
+                for (int j = 0; j < verticalLineCount; j++) sb.AppendLine(verticalLine);
+
+                /*
+                var prevFirst = prevNamesIndexes[i];
+                var prevSecond = prevNamesIndexes[i + 1];
+                var newFirst = (prevSecond - prevFirst) / 2;
+
+                var prevThird = prevNamesIndexes[i + 2];
+                var prevFourth = prevNamesIndexes[i + 3];
+                var newSecond = (prevThird - prevFourth) / 2;
+
+                var newGap = (newFirst - prevSecond);
+                var newMiddle = newGap / 2;
+                var verticalLineCount = newMiddle - 1;
+                */
+
+
+
+                if (fillement != null)
+                {
+                    sb.AppendLine(FormatName(fillement, maxNameLength) + regHorizontalLine);
+                }
+                else if (prevRound == null)
+                {
+                    sb.AppendLine(FormatName(round!.Matches[i].Player2 != null ? round!.Matches[i / 2].Player2!.Nickname : "Auto Advance", maxNameLength) + regHorizontalLine);
+                }
+                else
+                {
+                    sb.AppendLine(FormatName(round!.Matches[i + 1].Winner!.Nickname, maxNameLength) + regHorizontalLine);
+                }
+
+                if (prevMiddles.Count > i + 2)
+                {
+                    for (int j = 0; j < prevMiddles[0]; j++) sb.AppendLine(emptyLine);
                 }
             }
+            return sb;
         }
 
 
         private string TournamentToSchema(Tournament tournament)
         {
-            Dictionary<Round, List<int>> roundIndents = new Dictionary<Round, List<int>>();
+            List<int> initMiddles = new List<int>();
+            int counter = 0;
+            for (int i = 0; i < tournament.Rounds.First().Matches.Count * 2; i++)
+            {
+                initMiddles.Add(counter);
+                counter += (i % 2 == 0 ? 4 : 2);
+            }
             round.Matches.Select(m => Math.Max(m.Player1.Nickname.Length, m.Player2 != null ? m.Player2.Nickname.Length : 0)).Max();
         }
 
