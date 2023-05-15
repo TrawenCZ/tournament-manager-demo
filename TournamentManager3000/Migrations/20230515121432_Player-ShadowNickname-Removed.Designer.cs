@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TournamentManager3000.Data;
 
@@ -10,9 +11,11 @@ using TournamentManager3000.Data;
 namespace TournamentManager3000.Migrations
 {
     [DbContext(typeof(TournamentContext))]
-    partial class TournamentContextModelSnapshot : ModelSnapshot
+    [Migration("20230515121432_Player-ShadowNickname-Removed")]
+    partial class PlayerShadowNicknameRemoved
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
@@ -54,6 +57,9 @@ namespace TournamentManager3000.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
@@ -66,9 +72,6 @@ namespace TournamentManager3000.Migrations
                     b.Property<string>("Nickname")
                         .IsRequired()
                         .HasColumnType("TEXT");
-
-                    b.Property<int>("TournamentWins")
-                        .HasColumnType("INTEGER");
 
                     b.Property<int>("Wins")
                         .HasColumnType("INTEGER");

@@ -24,12 +24,5 @@ namespace TournamentManager3000.Data
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) => options.UseSqlite($"Data Source={DbPath}");
-
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            builder.Entity<Player>()
-                .HasIndex(u => u.Nickname)
-                .IsUnique();
-        }
     }
 }

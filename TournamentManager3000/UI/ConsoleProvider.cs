@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.UI.Helpers;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -61,7 +62,6 @@ namespace TournamentManager3000.UI
                     return;
                 } else if (command == "back" && inSubmenu)
                 {
-                    shouldContinue = inSubmenu;
                     changeInSubmenuAtTheEnd = true;
                 }
 
@@ -70,7 +70,7 @@ namespace TournamentManager3000.UI
                 if (inSubmenu)
                 {
                     if (currentSubmenuData.TryGetValue(command, out var subMenuAction)) taskForActions = Task.Run(() => subMenuAction!(argumentsToPass));
-                    else taskForActions = Task.Run(() => "Unrecognized action.\n\n" + currentSubmenuData["help"](filler));
+                    else taskForActions = Task.Run(() => $"Unrecognized action. {CommonMethods.CommandHelper(command, currentSubmenuData.Keys.ToList())}\n\n" + currentSubmenuData["help"](filler));
                 } else if (mainMenuData.TryGetValue(command, out var mainMenuAction))
                 {
                     if (mainMenuAction.menuToSwitch != null)
@@ -85,7 +85,7 @@ namespace TournamentManager3000.UI
                     }
                 } else
                 {
-                    taskForActions = Task.Run(() => "Unrecognized action.\n\n" + mainMenuData["help"].action(filler));
+                    taskForActions = Task.Run(() => $"Unrecognized action. {CommonMethods.CommandHelper(command, mainMenuData.Keys.ToList())}\n\n" + mainMenuData["help"].action(filler));
                 }
                 Task spinningAnimation = _loadingSpinner.Start(ctsForLoading.Token);
                 messageToPrint = await taskForActions;

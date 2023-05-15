@@ -63,7 +63,7 @@ namespace TournamentManager3000.Controllers
                 return "No players found in given file.";
             }
 
-            var alreadyStoredPlayers = _tournamentContext.Players.ToList();
+            var alreadyStoredPlayers = _tournamentContext.Players.Where(p => !p.IsDeleted).ToList();
             string duplicateNickname = "";
             if (_tournamentCreator.ContainsDuplicateByNickname(alreadyStoredPlayers.Concat(loadedPlayers).ToList(), out duplicateNickname)) return $"At least one of the imported players has duplicit nickname or nickname is already in use ('{duplicateNickname}')!";
             _tournamentContext.Players.AddRange(loadedPlayers);
@@ -76,7 +76,7 @@ namespace TournamentManager3000.Controllers
             var message = "";
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            var storedPlayers = _tournamentContext.Players.ToList();
+            var storedPlayers = _tournamentContext.Players.Where(p => !p.IsDeleted).ToList();
             string path = input[0];
 
             if (Directory.Exists(path))
@@ -101,129 +101,7 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        private string FormatName(string name, int maxNameLength)
-        {
-            return $"[ {name} ]" + new string('-', maxNameLength - name.Length);
-        }
 
-
-        private List<string> RoundToSchema(Round? round, Round? prevRound, int maxNameLength, List<int> prevMiddles, out List<int> newMiddles)
-        {
-            List<string> output = new List<string>();
-            int horizontalLineLength = 5;
-            int writeLength = maxNameLength + 4 + horizontalLineLength; // 4 for brackets and spaces around name
-            int totalLength = writeLength + horizontalLineLength - 1;
-            string endFillament = new string(' ', totalLength - writeLength);
-            string horizontalLine = new string('-', horizontalLineLength - 1);
-            string regHorizontalLine = horizontalLine + "+" + endFillament;
-            string endingHorizontalLine = new string(' ', writeLength - 1) + "+" + horizontalLine;
-
-            string verticalLine = new string(' ', writeLength - 1) + "|" + endFillament;
-            string emptyLine = new string(' ', totalLength);
-
-            newMiddles = new List<int>();
-            string? fillement = null;
-            if (round == null && prevRound == null) fillement = new string('_', maxNameLength);
-
-            for (int i = 0; i < prevMiddles[0]; i++) output.Add(string.Empty);
-            if (prevMiddles.Count == 1)
-            {
-                output.Add($"{{ {(fillement == null ? prevRound!.Matches.First().Winner!.Nickname : fillement)} }}");
-                for (int i = 0; i < prevMiddles[0]; i++) output.Add(string.Empty);
-                return output;
-            }
-
-            for (int i = 0; i < prevMiddles.Count; i += 2)
-            {
-                if (i > 0) for (int j = 0; j < prevMiddles[i] - prevMiddles[i - 1] - 1; j++) output.Add(emptyLine);
-
-                if (fillement != null)
-                {
-                    output.Add(FormatName(fillement, maxNameLength) + regHorizontalLine);
-                } else if (prevRound == null)
-                {
-                    output.Add(FormatName(round!.Matches[i / 2].Player1.Nickname, maxNameLength) + regHorizontalLine);
-                } else
-                {
-                    output.Add(FormatName(prevRound!.Matches[i].Winner!.Nickname, maxNameLength) + regHorizontalLine);
-                }
-
-                var newGap = prevMiddles[i + 1] - prevMiddles[i];
-                var newMiddle = newGap / 2;
-                newMiddles.Add(prevMiddles[i] + newMiddle);
-                var verticalLineCount = newMiddle - 1;
-
-                for (int j = 0; j < verticalLineCount; j++) output.Add(verticalLine);
-                output.Add(endingHorizontalLine);
-                for (int j = 0; j < verticalLineCount; j++) output.Add(verticalLine);
-
-                if (fillement != null)
-                {
-                    output.Add(FormatName(fillement, maxNameLength) + regHorizontalLine);
-                }
-                else if (prevRound == null)
-                {
-                    output.Add(FormatName(round!.Matches[i / 2].Player2 != null ? round!.Matches[i / 2].Player2!.Nickname : "Auto Advance", maxNameLength) + regHorizontalLine);
-                }
-                else
-                {
-                    output.Add(FormatName(round!.Matches[i + 1].Winner!.Nickname, maxNameLength) + regHorizontalLine);
-                }
-            }
-
-            for (int j = 0; j < prevMiddles[0]; j++) output.Add(string.Empty);
-            return output;
-        }
-
-
-        private int MaxNameLengthInRound(Round round)
-        {
-            return round.Matches.Select(m => Math.Max(m.Player1.Nickname.Length, m.Player2 != null ? m.Player2.Nickname.Length : "Auto Advance".Length)).Max();
-        }
-
-
-        private string TournamentToSchema(Tournament tournament, bool isEmpty)
-        {
-            List<int> newMiddles = new List<int>();
-            int counter = 0;
-            for (int i = 0; i < tournament.Rounds.First().Matches.Count * 2; i++)
-            {
-                newMiddles.Add(counter);
-                counter += (i % 2 == 0 ? 4 : 2);
-            }
-            int maxNameLength = MaxNameLengthInRound(tournament.Rounds.First());
-            List<StringBuilder> schemaBuilder = RoundToSchema(tournament.Rounds.First(), null, maxNameLength, new List<int>(newMiddles), out newMiddles).Select(s => new StringBuilder(s)).ToList();
-
-            int indexer = 1;
-            List<string> currRound = new List<string>();
-            while (newMiddles.Count != 0)
-            {
-                if (isEmpty)
-                {
-                    currRound = RoundToSchema(null, null, maxNameLength, new List<int>(newMiddles), out newMiddles);
-                } else if (tournament.Rounds.Count != 1 && tournament.Rounds.Count - 1 != indexer)
-                {
-                    currRound = RoundToSchema(tournament.Rounds[indexer],
-                        tournament.Rounds[indexer - 1],
-                        MaxNameLengthInRound(tournament.Rounds[indexer++]),
-                        new List<int>(newMiddles),
-                        out newMiddles);
-                } else
-                {
-                    currRound = RoundToSchema(null, tournament.Rounds[indexer - 1], maxNameLength, new List<int>(newMiddles), out newMiddles);
-                }
-
-                for (int i = 0; i < currRound.Count; i++)
-                {
-                    schemaBuilder[i].Append(currRound[i]);
-                }
-                
-            }
-
-            StringBuilder finalSchema = new StringBuilder($"Tournament '{tournament.Name}' schema:\n\n");
-            schemaBuilder.ForEach(sb => finalSchema.AppendLine(sb.ToString()));
-            return finalSchema.ToString();
-        }
 
 
         public string ExportEmptyTournamentSchema(MenuInput input)
@@ -261,7 +139,7 @@ namespace TournamentManager3000.Controllers
                 tournament = _tournamentCreator.CreateTournamentAndFirstRound(players, input[1]);
             }
 
-            string schema = TournamentToSchema(tournament, isEmpty);
+            string schema = _tournamentCreator.TournamentToSchema(tournament, isEmpty);
 
             var path = String.Join("", input[0]);
 

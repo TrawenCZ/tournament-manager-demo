@@ -111,7 +111,7 @@ namespace TournamentManager3000.Controllers
                 {"Rounds", new List<string>() { tournament.Rounds.Count.ToString() } },
                 {"Matches", new List<string>() { tournament.Rounds.Select(r => r.Matches.Count).Sum().ToString() } },
                 {"Winner", new List<string>() { tournament.Rounds.Last().Matches.Last().Winner!.Nickname } },
-            });
+            }) + "\n\n" + _tournamentCreator.TournamentToSchema(tournament, false);
         }
 
 
@@ -168,60 +168,7 @@ namespace TournamentManager3000.Controllers
             });
         }
 
-        /*
-         *         private string PlayerToString(Player player, bool autoAdvancePostfix = false)
-        {
-            string spaces = "      ";
-            return $"{spaces}Id: {player.Id}\n{spaces}Nickname: {player.Nickname}\n" + (autoAdvancePostfix ? $"{spaces}This player auto advances to next round.\n" : "");
-        }
-         * 
-        private string RoundToString(Round round)
-        {
 
-            StringBuilder sb = new StringBuilder();
-
-            // Round number
-            sb.AppendLine($"Round {round.RoundNumber}:");
-
-            // Matches
-            for (int i = 0; i < round.Matches.Count; i++)
-            {
-                Models.Match match = round.Matches[i];
-                sb.AppendLine($"  Match number '{i + 1}':");
-                sb.AppendLine($"    Player 1:");
-                sb.AppendLine(PlayerToString(match.Player1, match.Player2 == null));
-                if (match.Player2 != null)
-                {
-                    sb.AppendLine($"    Player 2:");
-                    sb.Append(PlayerToString(match.Player2));
-                }
-                if (match.Winner != null)
-                {
-                    sb.AppendLine($"    Winner:");
-                    sb.AppendLine(PlayerToString(match.Winner, false));
-                }
-                sb.AppendLine();
-            }
-
-            return sb.ToString();
-            /*
-            StringBuilder sbForMatchNumber = new StringBuilder();
-            StringBuilder sbForIds = new StringBuilder();
-            StringBuilder sbForNicknames = new StringBuilder();
-            sbForIds.AppendLine($"Round {round.RoundNumber}:");
-
-            foreach (var match in round.Matches)
-            {
-                string dummyOrRealNickname = match.Player1 == null ? "Auto Advance" : match.Player1.Nickname;
-                string dummyIdOrRealId = match.Player1 == null ? "" : match.Player1.Id.ToString();
-                List<string> paddedPlayer1 = CommonMethods.StringsToPadded(new List<string>() { dummyIdOrRealId, dummyOrRealNickname});
-                List<string> paddedPlayer2 = CommonMethods.StringsToPadded(new List<string>() { match.Player2Id.ToString(), match.Player2.Nickname });
-                sbForIds.AppendLine($"   {paddedPlayer1[0]} vs {paddedPlayer2[0]}");
-                sbForNicknames.AppendLine($"   {paddedPlayer1[1]} vs {paddedPlayer2[1]}");
-            }
-            return sb.ToString();
-        }
-        */
         public string Create(MenuInput input)
         {
             var message = "";
@@ -244,8 +191,9 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        private string FinishTournament(string winnerNickname)
+        private string FinishTournament(Player winner)
         {
+
             using (var transaction = _tournamentContext.Database.BeginTransaction())
             {
                 try 
@@ -262,9 +210,12 @@ namespace TournamentManager3000.Controllers
 
                     foreach (var player in _shadowPlayerStats.Keys)
                     {
+                        Console.WriteLine("Wins: " + _shadowPlayerStats[player].WinsCount + " Losses: " + _shadowPlayerStats[player].LossesCount + " Matches: " + _shadowPlayerStats[player].MatchesPlayed);
+                        Console.WriteLine("Original Wins: " + player.Wins + " Losses: " + player.Losses + " Matches: " + player.MatchesPlayed);
                         player.Wins += _shadowPlayerStats[player].WinsCount;
                         player.Losses += _shadowPlayerStats[player].LossesCount;
                         player.MatchesPlayed += _shadowPlayerStats[player].MatchesPlayed;
+                        player.TournamentWins += player == winner ? 1 : 0;
                     }
 
                     _tournamentContext.Players.UpdateRange(_shadowPlayerStats.Keys.ToList());
@@ -281,7 +232,7 @@ namespace TournamentManager3000.Controllers
             }
 
             HasTournamentStarted = false;
-            return $"\nTournament has ended and has been saved with ID '{_currentTournament.Id}'.\nAbsolute winner is {winnerNickname}. Congratulations!\n";
+            return $"\nTournament has ended and has been saved with ID '{_currentTournament.Id}'.\nAbsolute winner is {winner.Nickname}. Congratulations!\n";
         }
 
 
@@ -292,7 +243,7 @@ namespace TournamentManager3000.Controllers
             if (!int.TryParse(input[0], out int matchNumber)) return "First argument must be a number!";
 
             Round currentRound = _currentTournament.Rounds.Last();
-            if (matchNumber < 0 || matchNumber > currentRound.Matches.Count) return "Invalid match number";
+            if (matchNumber < 1 || matchNumber > currentRound.Matches.Count) return "Invalid match number";
             if (!CommonMethods.TryParsePlayer(input[1], _tournamentContext, out Player player)) return "Player does not exist";
 
             var match = currentRound.Matches[matchNumber - 1];
@@ -304,19 +255,19 @@ namespace TournamentManager3000.Controllers
             var winnerShadowStats = _shadowPlayerStats[player];
             _shadowPlayerStats[player] = (winnerShadowStats.WinsCount + 1, winnerShadowStats.LossesCount, winnerShadowStats.MatchesPlayed + 1);
 
-            Player loserPlayer = match.Player2 == player ? match.Player2 : match.Player1;
+            Player loserPlayer = match.Player1 == player ? match.Player2! : match.Player1;
             var loserShadowStats = _shadowPlayerStats[loserPlayer];
             _shadowPlayerStats[loserPlayer] = (loserShadowStats.WinsCount, loserShadowStats.LossesCount + 1, loserShadowStats.MatchesPlayed + 1);
 
 
             string outputString = RoundToString(currentRound);
-            if (currentRound.Matches.Count == 1) return outputString + FinishTournament(match.Winner.Nickname);
+            if (currentRound.Matches.Count == 1) return outputString + FinishTournament(match.Winner);
 
             if (!currentRound.Matches.Any(m => m.Winner == null))
             {
                 Round newRound = _tournamentCreator.StartNewRound(_currentTournament);
 
-                return outputString + $"Round {currentRound.RoundNumber} ended. Starting new round:\n" + RoundToString(newRound);
+                return outputString + $"\n\nRound {currentRound.RoundNumber} ended. Starting new round:\n" + RoundToString(newRound);
             }
 
             return outputString;

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using TournamentManager3000.Data;
@@ -131,14 +132,56 @@ namespace TournamentManager3000.Controllers.Helpers
             {
                 {"ID", players.Select(p => p.Id.ToString()).ToList() },
                 {"Nickname", players.Select(p => p.Nickname).ToList() },
-                {"Description", players.Select(p => p.Description != null ? p.Description : CommonMessages.NO_DESCR).ToList() },
                 {"Total Wins", players.Select(p => p.Wins.ToString()).ToList() },
                 {"Total Losses", players.Select(p => p.Losses.ToString()).ToList() },
+                {"Tournament Wins", players.Select(p => p.TournamentWins.ToString()).ToList() },
                 {"Matches played", players.Select(p => p.MatchesPlayed.ToString()).ToList() },
                 {"Win / Loss ratio", players.Select(p => p.Losses == 0 ? "No losses yet" : (p.Wins / p.Losses).ToString()).ToList() },
                 {"Win / Match ratio", players.Select(p => p.MatchesPlayed == 0 ? "No matches played yet" : (p.Wins / p.MatchesPlayed).ToString()).ToList() },
             });
         }
 
+
+        public static string CommandHelper(string input, List<string> commands)
+        {
+            var output = commands.Select(c => new { Command = c, SimDistance = ComputeStringSimilarity(c, input) }).OrderBy(cs => cs.SimDistance).FirstOrDefault(cs => cs.SimDistance < 5);
+            return output == null ? "" : $"Did you mean '{output.Command}'?";
+        }
+
+        private static int ComputeStringSimilarity(string s, string t)
+        {
+            if (string.IsNullOrEmpty(s))
+            {
+                if (string.IsNullOrEmpty(t))
+                    return 0;
+                return t.Length;
+            }
+
+            if (string.IsNullOrEmpty(t))
+            {
+                return s.Length;
+            }
+
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            // initialize the top and right of the table to 0, 1, 2, ...
+            for (int i = 0; i <= n; d[i, 0] = i++) ;
+            for (int j = 1; j <= m; d[0, j] = j++) ;
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                    int min1 = d[i - 1, j] + 1;
+                    int min2 = d[i, j - 1] + 1;
+                    int min3 = d[i - 1, j - 1] + cost;
+                    d[i, j] = Math.Min(Math.Min(min1, min2), min3);
+                }
+            }
+            return d[n, m];
+        }
     }
 }
