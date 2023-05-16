@@ -199,8 +199,6 @@ namespace TournamentManager3000.Controllers
 
                     foreach (var player in _shadowPlayerStats.Keys)
                     {
-                        Console.WriteLine("Wins: " + _shadowPlayerStats[player].WinsCount + " Losses: " + _shadowPlayerStats[player].LossesCount + " Matches: " + _shadowPlayerStats[player].MatchesPlayed);
-                        Console.WriteLine("Original Wins: " + player.Wins + " Losses: " + player.Losses + " Matches: " + player.MatchesPlayed);
                         player.Wins += _shadowPlayerStats[player].WinsCount;
                         player.Losses += _shadowPlayerStats[player].LossesCount;
                         player.MatchesPlayed += _shadowPlayerStats[player].MatchesPlayed;

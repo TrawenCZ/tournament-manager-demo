@@ -253,7 +253,7 @@ namespace TournamentManager3000.Controllers.Helpers
                 {
                     currRound = RoundToSchema(null, null, maxNameLength, new List<int>(newMiddles), out newMiddles);
                 }
-                else if (tournament.Rounds.Count != 1 && tournament.Rounds.Count - 1 != indexer)
+                else if (tournament.Rounds.Count != 1 && tournament.Rounds.Count != indexer)
                 {
                     currRound = RoundToSchema(tournament.Rounds[indexer],
                         tournament.Rounds[indexer - 1],

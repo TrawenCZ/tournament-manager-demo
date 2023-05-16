@@ -113,12 +113,12 @@ namespace TournamentManager3000.Controllers
         private string ExportTournamentSchema(MenuInput input, bool isEmpty)
         {
             string message;
-            if (!CommonMethods.CheckListLength(input, 1, (isEmpty ? int.MaxValue : 2), out message)) return message;
+            if (!CommonMethods.CheckListLength(input, (isEmpty ? 3 : 2), (isEmpty ? int.MaxValue : 2), out message)) return message;
 
             Tournament tournament;
             if (!isEmpty)
             {
-                int tournamentId = 0;
+                int tournamentId;
                 if (!int.TryParse(input[1], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
                 tournament = new Tournament();
