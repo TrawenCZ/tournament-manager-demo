@@ -1,12 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.Data;
 using TournamentManager3000.Models;
@@ -43,11 +35,8 @@ namespace TournamentManager3000.Controllers
                 message = "There is already an ongoing tournament. You have to exit this one first.";
                 return false;
             }
-            else
-            {
-                message = "";
-                return true;
-            }
+            message = "";
+            return true;
         }
 
         public string MenuName(MenuInput _) => "Tournament menu";
@@ -79,13 +68,13 @@ namespace TournamentManager3000.Controllers
 
         public string DeleteTournament(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            var tournamentId = 0;
+            int tournamentId;
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
-            var tournamentToDelete = new Tournament();
+            Tournament tournamentToDelete;
             if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournamentToDelete)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
 
             _tournamentContext.Tournaments.Remove(tournamentToDelete);
@@ -95,16 +84,16 @@ namespace TournamentManager3000.Controllers
 
         public string ShowTournament(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            int tournamentId = 0;
+            int tournamentId;
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
-            Tournament tournament = new Tournament();
+            Tournament tournament;
             if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournament)) return "Tournament" + CommonMessages.ID_NOT_FOUND;
 
-            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>> 
+            return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>
             {
                 {"ID", new List<string>() { tournament.Id.ToString() } },
                 {"Name", new List<string>() { tournament.Name} },
@@ -117,16 +106,16 @@ namespace TournamentManager3000.Controllers
 
         public string ShowRound(MenuInput input)
         {
-            var message = "";
+            string message;
             if (CommonMethods.CheckListLength(input, 2, 2, out message)) return message;
 
-            var tournamentId = 0;
+            int tournamentId;
             if (!int.TryParse(input[0], out tournamentId)) return "First" + CommonMessages.NUM_ARG;
 
-            var roundNum = 0;
+            int roundNum;
             if (!int.TryParse(input[1], out roundNum)) return "Second" + CommonMessages.NUM_ARG;
 
-            var tournament = new Tournament();
+            Tournament tournament;
             if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournament)) return "Tournament with given ID does not exist!";
 
             if (roundNum < 1 || roundNum > tournament.Rounds.Count) return $"Given round number is out of range for selected Tournament '{tournament.Name}'.";
@@ -171,12 +160,12 @@ namespace TournamentManager3000.Controllers
 
         public string Create(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CheckOngoingTournament(false, out message)) return message;
             if (!CommonMethods.CheckListLength(input, 3, int.MaxValue, out message)) return message;
 
             List<string> playerIdsOrNicknames = input.Skip(1).ToList();
-            List<Player> players = new List<Player>();
+            List<Player> players;
             if (!_tournamentCreator.TryLoadPlayers(playerIdsOrNicknames, _tournamentContext, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";
             if (_tournamentCreator.ContainsDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
 
@@ -196,7 +185,7 @@ namespace TournamentManager3000.Controllers
 
             using (var transaction = _tournamentContext.Database.BeginTransaction())
             {
-                try 
+                try
                 {
                     foreach (Round round in _currentTournament.Rounds)
                     {

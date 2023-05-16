@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.Data;
 using TournamentManager3000.Models;
@@ -23,12 +18,11 @@ namespace TournamentManager3000.Controllers
             _tournamentCreator = tournamentCreator;
         }
 
-        public string MenuName(MenuInput input) => "Import/Export menu";
+        public string MenuName(MenuInput _) => "Import/Export menu";
 
-        public string Help(MenuInput input)
+        public string Help(MenuInput _)
         {
-            return CommonMessages.HELP_HEADER +
-                "FILEPATH cannot contain any spaces!\n" +
+            return "Please note that FILEPATH argument cannot contain any spaces. " + CommonMessages.HELP_HEADER +
                 CommonMessages.HELP_OPTION +
                 "'import-players <FILEPATH>' - imports players from given file in JSON format\n" +
                 "'export-players <FILEPATH>' - exports stored players to given directory or file in JSON format\n" +
@@ -41,7 +35,7 @@ namespace TournamentManager3000.Controllers
 
         public string ImportPlayers(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
             string path = input[0];
@@ -53,7 +47,8 @@ namespace TournamentManager3000.Controllers
             {
                 FileStream inputFile = new FileStream(path, FileMode.Open);
                 loadedPlayers = JsonSerializer.Deserialize<List<Player>>(inputFile);
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return "Error occured while importing players:\n" + ex.Message;
             }
@@ -64,16 +59,17 @@ namespace TournamentManager3000.Controllers
             }
 
             var alreadyStoredPlayers = _tournamentContext.Players.Where(p => !p.IsDeleted).ToList();
-            string duplicateNickname = "";
+            string duplicateNickname;
             if (_tournamentCreator.ContainsDuplicateByNickname(alreadyStoredPlayers.Concat(loadedPlayers).ToList(), out duplicateNickname)) return $"At least one of the imported players has duplicit nickname or nickname is already in use ('{duplicateNickname}')!";
+
             _tournamentContext.Players.AddRange(loadedPlayers);
             _tournamentContext.SaveChanges();
             return $"{loadedPlayers.Count} player{(loadedPlayers.Count > 1 ? "s" : "")} successfuly imported:\n\n" + CommonMethods.ListPlayers(loadedPlayers);
         }
 
         public string ExportPlayers(MenuInput input)
-        { 
-            var message = "";
+        {
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
             var storedPlayers = _tournamentContext.Players.Where(p => !p.IsDeleted).ToList();
@@ -82,7 +78,8 @@ namespace TournamentManager3000.Controllers
             if (Directory.Exists(path))
             {
                 path = Path.Combine(path, "players.json");
-            } else if (Path.GetExtension(path) != ".json")
+            }
+            else if (Path.GetExtension(path) != ".json")
             {
                 path = Path.ChangeExtension(path, ".json");
             }
@@ -92,16 +89,14 @@ namespace TournamentManager3000.Controllers
                 FileStream outputFile = new FileStream(path, FileMode.Create);
                 JsonSerializer.Serialize(outputFile, storedPlayers, _jsonSerializerOptions);
                 outputFile.Dispose();
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 return "Error occured while export players:\n" + ex.Message;
             }
 
             return $"Players were successfuly exported to '{path}'.";
         }
-
-
-
 
 
         public string ExportEmptyTournamentSchema(MenuInput input)
@@ -117,7 +112,7 @@ namespace TournamentManager3000.Controllers
 
         private string ExportTournamentSchema(MenuInput input, bool isEmpty)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, (isEmpty ? int.MaxValue : 2), out message)) return message;
 
             Tournament tournament;
@@ -128,7 +123,8 @@ namespace TournamentManager3000.Controllers
 
                 tournament = new Tournament();
                 if (!_tournamentCreator.TryParseTournament(tournamentId, _tournamentContext, out tournament)) return "Tournament not found along stored tournaments.";
-            } else
+            }
+            else
             {
                 List<string> playerIdsOrNicknames = input.Skip(2).ToList();
                 List<Player> players = new List<Player>();
@@ -159,7 +155,8 @@ namespace TournamentManager3000.Controllers
                 streamWriter.Write(schema);
                 streamWriter.Close();
                 fileStream.Close();
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 return "Error occured while saving schema to file:\n" + e.Message;
             }

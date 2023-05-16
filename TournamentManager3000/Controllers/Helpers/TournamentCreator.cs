@@ -1,9 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using TournamentManager3000.Data;
 using TournamentManager3000.Models;
 
@@ -80,9 +76,9 @@ namespace TournamentManager3000.Controllers.Helpers
             int numOfDummyPlayers = (int)Math.Pow(2, Math.Ceiling(Math.Log(numOfPlayers, 2))) - numOfPlayers;
 
             Shuffle(players);
-            for (int i = 0; i < numOfDummyPlayers * 2; i += 2)
+            for (int i = 1; i <= numOfDummyPlayers * 2; i += 2)
             {
-                players.Insert(i + 1, _dummyPlayer);
+                players.Insert(i, _dummyPlayer);
             }
         }
 
@@ -161,10 +157,12 @@ namespace TournamentManager3000.Controllers.Helpers
 
         private List<string> RoundToSchema(Round? round, Round? prevRound, int maxNameLength, List<int> prevMiddles, out List<int> newMiddles)
         {
+            // well, this one is complicated, but it gets the job done
             List<string> output = new List<string>();
             int horizontalLineLength = 5;
             int writeLength = maxNameLength + 4 + horizontalLineLength; // 4 for brackets and spaces around name
             int totalLength = writeLength + horizontalLineLength - 1;
+
             string endFillament = new string(' ', totalLength - writeLength);
             string horizontalLine = new string('-', horizontalLineLength - 1);
             string regHorizontalLine = horizontalLine + "+" + endFillament;

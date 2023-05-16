@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using TournamentManager3000.Controllers.Helpers;
+﻿using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.Data;
 using TournamentManager3000.Models;
-using TournamentManager3000.UI;
 
 namespace TournamentManager3000.Controllers
 {
@@ -17,14 +10,14 @@ namespace TournamentManager3000.Controllers
         private readonly TournamentContext _tournamentContext;
 
 
-        public PlayerController(TournamentContext tournamentContext) 
+        public PlayerController(TournamentContext tournamentContext)
         {
             _tournamentContext = tournamentContext;
         }
 
-        public string MenuName(MenuInput input) => "Player menu";
+        public string MenuName(MenuInput _) => "Player menu";
 
-        public string Help(MenuInput input)
+        public string Help(MenuInput _)
         {
             return CommonMessages.HELP_HEADER +
                 CommonMessages.HELP_OPTION +
@@ -39,10 +32,10 @@ namespace TournamentManager3000.Controllers
 
         public string CreatePlayer(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            var existingPlayer = new Player();
+            Player existingPlayer;
             if (CommonMethods.TryParsePlayer(input[0], _tournamentContext, out existingPlayer)) return "Player with given nickname already exists. Try different one.";
 
             var newPlayer = new Player() { Nickname = input[0] };
@@ -53,10 +46,10 @@ namespace TournamentManager3000.Controllers
 
         public string DeletePlayer(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            var playerToDelete = new Player();
+            Player playerToDelete;
             if (!CommonMethods.TryParsePlayer(input[0], _tournamentContext, out playerToDelete)) return "Player with given ID/nickname does not exist!";
 
             playerToDelete.IsDeleted = true;
@@ -67,10 +60,10 @@ namespace TournamentManager3000.Controllers
 
         public string ShowPlayer(MenuInput input)
         {
-            var message = "";
+            string message;
             if (!CommonMethods.CheckListLength(input, 1, 1, out message)) return message;
 
-            var player = new Player();
+            Player player;
             if (!CommonMethods.TryParsePlayer(input[0], _tournamentContext, out player)) return "Player with given ID/nickname does not exist!";
 
             return CommonMethods.BuildTableFromDictionary(new Dictionary<string, List<string>>()

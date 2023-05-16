@@ -1,9 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
-using System.Collections.Generic;
 using TournamentManager3000.Controllers;
 using TournamentManager3000.Controllers.Helpers;
 using TournamentManager3000.Data;
-using TournamentManager3000.Models;
 using TournamentManager3000.UI;
 using TournamentManager3000.UI.Helpers;
 
@@ -30,7 +28,8 @@ namespace TournamentManager3000
                     MenuData menuData = new MenuData(tournamentController, playerController, importExportController);
                     await consoleProvider.CommunicateWithUser(menuData);
                 }
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
                 return;
