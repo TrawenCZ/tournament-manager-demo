@@ -5,7 +5,7 @@
 namespace TournamentManager3000.Migrations
 {
     /// <inheritdoc />
-    public partial class CascadeDeleteProperties : Migration
+    public partial class CascadeDeleteProps : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

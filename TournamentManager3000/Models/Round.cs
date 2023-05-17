@@ -4,6 +4,9 @@
     {
         public int Id { get; set; }
         public int RoundNumber { get; set; }
+
+        public int TournamentId { get; set; }
+
         public List<Match> Matches { get; init; }
     }
 }

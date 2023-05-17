@@ -8,6 +8,10 @@
         public int? Player2Id { get; set; }
         public Player? Player2 { get; set; }
 
+
+        public int RoundId { get; set; }
+
+
         public int? WinnerId { get; set; }
         public Player? Winner { get; set; }
     }

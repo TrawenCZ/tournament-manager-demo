@@ -11,8 +11,8 @@ using TournamentManager3000.Data;
 namespace TournamentManager3000.Migrations
 {
     [DbContext(typeof(TournamentContext))]
-    [Migration("20230516153927_Cascade-Delete-Properties")]
-    partial class CascadeDeleteProperties
+    [Migration("20230517231511_Cascade-Delete-Props")]
+    partial class CascadeDeleteProps
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -127,7 +127,7 @@ namespace TournamentManager3000.Migrations
                         .WithMany()
                         .HasForeignKey("Player2Id");
 
-                    b.HasOne("TournamentManager3000.Models.Round", "Round")
+                    b.HasOne("TournamentManager3000.Models.Round", null)
                         .WithMany("Matches")
                         .HasForeignKey("RoundId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -141,20 +141,16 @@ namespace TournamentManager3000.Migrations
 
                     b.Navigation("Player2");
 
-                    b.Navigation("Round");
-
                     b.Navigation("Winner");
                 });
 
             modelBuilder.Entity("TournamentManager3000.Models.Round", b =>
                 {
-                    b.HasOne("TournamentManager3000.Models.Tournament", "Tournament")
+                    b.HasOne("TournamentManager3000.Models.Tournament", null)
                         .WithMany("Rounds")
                         .HasForeignKey("TournamentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tournament");
                 });
 
             modelBuilder.Entity("TournamentManager3000.Models.Round", b =>

@@ -98,18 +98,13 @@ namespace TournamentManager3000.UI
                 catch (Exception e)
                 {
                     Console.WriteLine("Exception occured during runtime:\n" + e.Message);
+                    if (inSubmenu)
+                    {
+                        currentSubmenuData["back"](filler);
+                        inSubmenu = false;
+                    }
                 }
             }
         }
-
-        /*
-        public List<string> ReadAndSplitLine(string message)
-        {
-            Console.WriteLine(message);
-            string? inputLine = Console.ReadLine();
-            if (inputLine == null) return new List<string>();
-            return new List<string>(Regex.Replace(inputLine, @"\s+", " ").Trim().Split());
-        }
-        */
     }
 }

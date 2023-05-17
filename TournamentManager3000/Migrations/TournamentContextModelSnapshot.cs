@@ -124,7 +124,7 @@ namespace TournamentManager3000.Migrations
                         .WithMany()
                         .HasForeignKey("Player2Id");
 
-                    b.HasOne("TournamentManager3000.Models.Round", "Round")
+                    b.HasOne("TournamentManager3000.Models.Round", null)
                         .WithMany("Matches")
                         .HasForeignKey("RoundId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -138,20 +138,16 @@ namespace TournamentManager3000.Migrations
 
                     b.Navigation("Player2");
 
-                    b.Navigation("Round");
-
                     b.Navigation("Winner");
                 });
 
             modelBuilder.Entity("TournamentManager3000.Models.Round", b =>
                 {
-                    b.HasOne("TournamentManager3000.Models.Tournament", "Tournament")
+                    b.HasOne("TournamentManager3000.Models.Tournament", null)
                         .WithMany("Rounds")
                         .HasForeignKey("TournamentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Tournament");
                 });
 
             modelBuilder.Entity("TournamentManager3000.Models.Round", b =>

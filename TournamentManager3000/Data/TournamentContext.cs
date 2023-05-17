@@ -14,8 +14,7 @@ namespace TournamentManager3000.Data
         public TournamentContext()
         {
             string currDirPath = Directory.GetCurrentDirectory();
-            //DbPath = Path.Join(currDirPath, "Data", "DB", "tournamentManager.db");
-            DbPath = "D:\\Data\\Codes\\PV178 Úvod do C#\\Project\\TournamentManager3000\\TournamentManager3000\\Data\\DB\\tournamentManager.db";
+            DbPath = "D:\\Data\\Codes\\PV178 Úvod do C#\\Project\\TournamentManager3000\\TournamentManager3000\\Data\\DB\\tournamentManager.db";        // here goes location of your database file ('Data/DB/tournamentManager.db')
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options) => options.UseSqlite($"Data Source={DbPath}");

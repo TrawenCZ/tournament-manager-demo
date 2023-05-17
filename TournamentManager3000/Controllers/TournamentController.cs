@@ -187,14 +187,6 @@ namespace TournamentManager3000.Controllers
             {
                 try
                 {
-                    foreach (Round round in _currentTournament.Rounds)
-                    {
-                        _tournamentContext.Matches.AddRange(round.Matches);
-                        _tournamentContext.SaveChanges();
-                        _tournamentContext.Rounds.Add(round);
-                        _tournamentContext.SaveChanges();
-                    }
-
                     _tournamentContext.Tournaments.Add(_currentTournament);
 
                     foreach (var player in _shadowPlayerStats.Keys)
