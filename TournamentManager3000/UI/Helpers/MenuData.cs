@@ -23,13 +23,13 @@ namespace TournamentManager3000.UI.Helpers
 
         public MenuData(TournamentController tournamentController, PlayerController playerController, ImportExportController importExportController)
         {
-
+            // I had this idea to store commands in a dictionary, and wanted to try it out. I don't know if something like this is used in real world, but I think it's pretty cool, since
+            // it allows me to easily add new commands and corresponing methods, I don't have to use ugly switch statements, it's easy to read, understand and use. It also have complexity of O(1),
+            // even when you probably won't have that many commands to notice it. But I like it :)
             TournamentMenuCommands = new SubmenuCommandDictionary()
             {
-                {"menu name", tournamentController.MenuName},
-                {"help", tournamentController.Help},
                 {"back", tournamentController.Back},
-                {"create-tournament", tournamentController.Create},
+                {"create-tournament", tournamentController.CreateTournament},
                 {"add-result", tournamentController.SetMatchWinner},
                 {"show-tournament", tournamentController.ShowTournament},
                 {"show-round", tournamentController.ShowRound},
@@ -39,8 +39,6 @@ namespace TournamentManager3000.UI.Helpers
 
             PlayerMenuCommands = new SubmenuCommandDictionary()
             {
-                {"menu name", playerController.MenuName},
-                {"help", playerController.Help},
                 {"back", playerController.Back},
                 {"create-player", playerController.CreatePlayer},
                 {"show-player", playerController.ShowPlayer},
@@ -50,8 +48,6 @@ namespace TournamentManager3000.UI.Helpers
 
             ImportExportMenuCommands = new SubmenuCommandDictionary()
             {
-                {"menu name", importExportController.MenuName},
-                {"help", importExportController.Help},
                 {"back", importExportController.Back},
                 {"import-players", importExportController.ImportPlayers},
                 {"export-players", importExportController.ExportPlayers},

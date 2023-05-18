@@ -18,19 +18,6 @@ namespace TournamentManager3000.Controllers
             _tournamentCreator = tournamentCreator;
         }
 
-        public string MenuName(MenuInput _) => "Import/Export menu";
-
-        public string Help(MenuInput _)
-        {
-            return "Please note that FILEPATH argument cannot contain any spaces. " + CommonMessages.HELP_HEADER +
-                CommonMessages.HELP_OPTION +
-                "'import-players <FILEPATH>' - imports players from given file in JSON format\n" +
-                "'export-players <FILEPATH>' - exports stored players to given directory or file in JSON format\n" +
-                "'export-tournament <FILEPATH> <TOURNAMENT ID>' - exports filled schema to given directory TXT file\n" +
-                "'export-empty-tournament <FILEPATH> <TOURNAMENT NAME> <list of PLAYER IDs or NICKNAMEs>' - exports empty schema to given directory or TXT file\n" +
-                CommonMessages.BACK_TO_MAIN;
-        }
-
         public string Back(MenuInput _) => "Leaving Import/Export menu";
 
         public string ImportPlayers(MenuInput input)
@@ -60,7 +47,7 @@ namespace TournamentManager3000.Controllers
 
             var alreadyStoredPlayers = _tournamentContext.Players.Where(p => !p.IsDeleted).ToList();
             string duplicateNickname;
-            if (_tournamentCreator.ContainsDuplicateByNickname(alreadyStoredPlayers.Concat(loadedPlayers).ToList(), out duplicateNickname)) return $"At least one of the imported players has duplicit nickname or nickname is already in use ('{duplicateNickname}')!";
+            if (_tournamentCreator.PlayersContainDuplicatByNickname(alreadyStoredPlayers.Concat(loadedPlayers).ToList(), out duplicateNickname)) return $"At least one of the imported players has duplicit nickname or nickname is already in use ('{duplicateNickname}')!";
 
             _tournamentContext.Players.AddRange(loadedPlayers);
             _tournamentContext.SaveChanges();
@@ -95,7 +82,7 @@ namespace TournamentManager3000.Controllers
                 return "Error occured while export players:\n" + ex.Message;
             }
 
-            return $"Players were successfuly exported to '{path}'.";
+            return $"'{storedPlayers.Count}' players were successfuly exported to '{path}'.";
         }
 
 
@@ -130,7 +117,7 @@ namespace TournamentManager3000.Controllers
                 List<Player> players = new List<Player>();
                 if (!_tournamentCreator.TryLoadPlayers(playerIdsOrNicknames, _tournamentContext, out players)) return $"Player ID/nickname '{playerIdsOrNicknames[players.Count]}' was not found.";
 
-                if (_tournamentCreator.ContainsDuplicate(players, out var player)) return $"Player '{player.Nickname}' was found multiple times.";
+                if (_tournamentCreator.PlayersContainDuplicate(players, out var player)) return $"Player '{player.Nickname}' was found multiple times.";
 
                 tournament = _tournamentCreator.CreateTournamentAndFirstRound(players, input[1]);
             }

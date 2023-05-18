@@ -15,6 +15,7 @@ namespace TournamentManager3000
     {
         public async static Task Main()
         {
+            // I left just two players in db, so that you can test functionality with empty storage and some records yourself
             try
             {
                 ConsoleProvider consoleProvider = new ConsoleProvider();
@@ -29,7 +30,7 @@ namespace TournamentManager3000
                     await consoleProvider.CommunicateWithUser(menuData);
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex)            // this should never happen, but just in case, I know Microsoft
             {
                 Console.WriteLine(ex);
                 return;

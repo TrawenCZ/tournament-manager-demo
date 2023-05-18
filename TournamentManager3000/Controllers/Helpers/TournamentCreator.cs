@@ -83,21 +83,22 @@ namespace TournamentManager3000.Controllers.Helpers
         }
 
 
+        // Random order of players so that insert dummies is fair
         private void Shuffle(List<Player> list)
         {
-            Random rng = new Random();
+            Random random = new Random();
             int n = list.Count;
             while (n > 1)
             {
                 n--;
-                int k = rng.Next(n + 1);
-                Player value = list[k];
+                int k = random.Next(n + 1);
+                Player player = list[k];
                 list[k] = list[n];
-                list[n] = value;
+                list[n] = player;
             }
         }
 
-        public bool ContainsDuplicateByNickname(List<Player> players, out string duplicateNickname)
+        public bool PlayersContainDuplicatByNickname(List<Player> players, out string duplicateNickname)
         {
             duplicateNickname = "";
             var duplicates = players.GroupBy(x => x.Nickname)
@@ -113,7 +114,7 @@ namespace TournamentManager3000.Controllers.Helpers
         }
 
 
-        public bool ContainsDuplicate(List<Player> players, out Player duplicate)
+        public bool PlayersContainDuplicate(List<Player> players, out Player duplicate)
         {
             duplicate = new Player();
             var duplicates = players.GroupBy(x => x)
@@ -157,7 +158,7 @@ namespace TournamentManager3000.Controllers.Helpers
 
         private List<string> RoundToSchema(Round? round, Round? prevRound, int maxNameLength, List<int> prevMiddles, out List<int> newMiddles)
         {
-            // well, this one is complicated, but it gets the job done
+            // well, this one is complicated, but it gets the job done, I'll try to explain it a bit
             List<string> output = new List<string>();
             int horizontalLineLength = 5;
             int writeLength = maxNameLength + 4 + horizontalLineLength; // 4 for brackets and spaces around name
@@ -171,14 +172,16 @@ namespace TournamentManager3000.Controllers.Helpers
             string verticalLine = new string(' ', writeLength - 1) + "|" + endFillament;
             string emptyLine = new string(' ', totalLength);
 
-            newMiddles = new List<int>();
-            string? fillement = null;
-            if (round == null && prevRound == null) fillement = new string('_', maxNameLength);
+            // to this point, we created lines and fillaments, now we're goin to use them with the data we have
+
+            newMiddles = new List<int>();   // these 'middles' lists are the indexes of the middle of the lines, where we put the names
+            string? fillament = null;       // this one is used where player is missing, so we fill the space with underscores
+            if (round == null && prevRound == null) fillament = new string('_', maxNameLength);
 
             for (int i = 0; i < prevMiddles[0]; i++) output.Add(string.Empty);
-            if (prevMiddles.Count == 1)
+            if (prevMiddles.Count == 1)     // this if statement is for the very end of the tournament, since later we are going to add 2 lines at once
             {
-                output.Add($"{{ {(fillement == null ? prevRound!.Matches.First().Winner!.Nickname : fillement)} }}");
+                output.Add($"{{ {(fillament == null ? prevRound!.Matches.First().Winner!.Nickname : fillament)} }}");
                 return output;
             }
 
@@ -186,20 +189,20 @@ namespace TournamentManager3000.Controllers.Helpers
             {
                 if (i > 0) for (int j = 0; j < prevMiddles[i] - prevMiddles[i - 1] - 1; j++) output.Add(emptyLine);
 
-                if (fillement != null)
+                if (fillament != null)
                 {
-                    output.Add(FormatName(fillement, maxNameLength) + regHorizontalLine);
+                    output.Add(FormatName(fillament, maxNameLength) + regHorizontalLine);       // player is missing
                 }
                 else if (prevRound == null)
                 {
-                    output.Add(FormatName(round!.Matches[i / 2].Player1.Nickname, maxNameLength) + regHorizontalLine);
+                    output.Add(FormatName(round!.Matches[i / 2].Player1.Nickname, maxNameLength) + regHorizontalLine);  // first round
                 }
                 else
                 {
-                    output.Add(FormatName(prevRound!.Matches[i].Winner!.Nickname, maxNameLength) + regHorizontalLine);
+                    output.Add(FormatName(prevRound!.Matches[i].Winner!.Nickname, maxNameLength) + regHorizontalLine);  // later rounds
                 }
 
-                var newGap = prevMiddles[i + 1] - prevMiddles[i];
+                var newGap = prevMiddles[i + 1] - prevMiddles[i];           // gap between the two player nicknames
                 var newMiddle = newGap / 2;
                 newMiddles.Add(prevMiddles[i] + newMiddle);
                 var verticalLineCount = newMiddle - 1;
@@ -208,9 +211,9 @@ namespace TournamentManager3000.Controllers.Helpers
                 output.Add(endingHorizontalLine);
                 for (int j = 0; j < verticalLineCount; j++) output.Add(verticalLine);
 
-                if (fillement != null)
+                if (fillament != null)
                 {
-                    output.Add(FormatName(fillement, maxNameLength) + regHorizontalLine);
+                    output.Add(FormatName(fillament, maxNameLength) + regHorizontalLine);
                 }
                 else if (prevRound == null)
                 {
@@ -235,9 +238,10 @@ namespace TournamentManager3000.Controllers.Helpers
 
         public string TournamentToSchema(Tournament tournament, bool isEmpty)
         {
+            // basically, this method creates column for each round and then combines them into one string
             List<int> newMiddles = new List<int>();
             int counter = 0;
-            for (int i = 0; i < tournament.Rounds.First().Matches.Count * 2; i++)
+            for (int i = 0; i < tournament.Rounds.First().Matches.Count * 2; i++)           // creating the list of initial indexes of the middles explained above
             {
                 newMiddles.Add(counter);
                 counter += (i % 2 == 0 ? 4 : 2);

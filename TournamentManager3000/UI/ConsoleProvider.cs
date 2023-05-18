@@ -8,7 +8,7 @@ namespace TournamentManager3000.UI
     using SubmenuCommandDictionary = Dictionary<string, MenuAction>;
     public class ConsoleProvider
     {
-        private LoadingSpinner _loadingSpinner;
+        private LoadingSpinner _loadingSpinner;         // asynchrounous loading spinning animation
 
         public ConsoleProvider()
         {
@@ -23,8 +23,8 @@ namespace TournamentManager3000.UI
             List<string> filler = new List<string>();
             Task<string> taskForActions;
 
-            SubmenuCommandDictionary currentSubmenuData = data.TournamentMenuCommands;
-            CommandDictionary menuSwitches = data.MenuSwitches;
+            SubmenuCommandDictionary currentSubmenuData = data.TournamentMenuCommands;      // kinda like menu context
+            CommandDictionary menuSwitches = data.MenuSwitches;                             // commands to switch these contexts
             Dictionary<SubmenuCommandDictionary, (string MenuName, string HelpMsg)> menuNamesAndHelpMsgs = data.MenuNamesAndHelpMsgs;
 
             Console.WriteLine("Welcome to TournamentManager3000 - the best and most powerful tournament manager yet.\nLet's start with list of available commands in Main menu:\n\n" + data.MainMenuHelpMsg);
@@ -56,12 +56,12 @@ namespace TournamentManager3000.UI
                         Console.WriteLine($"Are you sure you want to exit program? (Yes/No)");
                         var answer = Console.ReadLine();
                         if (answer?.ToLower() != "yes" && answer?.ToLower() != "y") continue;
-                        Console.WriteLine("See you next time!");
                         return;
                     }
-                    if (command == "help" && !inSubmenu)
+                    if (command == "help")
                     {
-                        Console.WriteLine(data.MainMenuHelpMsg);
+                        if (inSubmenu) Console.WriteLine(menuNamesAndHelpMsgs[currentSubmenuData].HelpMsg);
+                        else Console.WriteLine(data.MainMenuHelpMsg);
                         continue;
                     }
 
@@ -70,7 +70,7 @@ namespace TournamentManager3000.UI
                     if (inSubmenu)
                     {
                         if (currentSubmenuData.TryGetValue(command, out var subMenuAction)) taskForActions = Task.Run(() => subMenuAction!(argumentsToPass));
-                        else taskForActions = Task.Run(() => $"Unrecognized action. {CommonMethods.CommandHelper(command, currentSubmenuData.Keys.ToList())}\n\n" + menuNamesAndHelpMsgs[currentSubmenuData].HelpMsg);
+                        else taskForActions = Task.Run(() => $"Unrecognized action. {CommandHelper(command, currentSubmenuData.Keys.ToList())}\n\n" + menuNamesAndHelpMsgs[currentSubmenuData].HelpMsg);
                     }
                     else if (menuSwitches.TryGetValue(command, out var mainMenuAction))
                     {
@@ -81,7 +81,7 @@ namespace TournamentManager3000.UI
                     }
                     else
                     {
-                        taskForActions = Task.Run(() => $"Unrecognized action. {CommonMethods.CommandHelper(command, menuSwitches.Keys.ToList())}\n\n" + data.MainMenuHelpMsg);
+                        taskForActions = Task.Run(() => $"Unrecognized action. {CommandHelper(command, menuSwitches.Keys.ToList())}\n\n" + data.MainMenuHelpMsg);
                     }
                     Task spinningAnimation = _loadingSpinner.Start(ctsForLoading.Token);
                     messageToPrint = await taskForActions;
@@ -98,13 +98,60 @@ namespace TournamentManager3000.UI
                 catch (Exception e)
                 {
                     Console.WriteLine("Exception occured during runtime:\n" + e.Message);
+                    Console.WriteLine($"Do you want to exit program now? (Yes/No)");
+                    var answer = Console.ReadLine();
+                    if (answer?.ToLower() == "yes" || answer?.ToLower() == "y") shouldContinue = false;
+
                     if (inSubmenu)
-                    {
-                        currentSubmenuData["back"](filler);
-                        inSubmenu = false;
-                    }
+                        {
+                            currentSubmenuData["back"](filler);
+                            inSubmenu = false;
+                        }
                 }
             }
+
+            Console.WriteLine("See you next time!");
+        }
+
+        private string CommandHelper(string input, List<string> commands)
+        {
+            var output = commands.Select(c => new { Command = c, SimDistance = ComputeStringSimilarity(c, input) }).OrderBy(cs => cs.SimDistance).FirstOrDefault(cs => cs.SimDistance < 5);
+            return output == null ? "" : $"Did you mean '{output.Command}'?";
+        }
+
+        private int ComputeStringSimilarity(string command, string input)         // computation of string similarity with Levenshtein distance algorithm, main part of it is from StackOverflow, I'm not that smart
+        {
+            if (string.IsNullOrEmpty(command))
+            {
+                if (string.IsNullOrEmpty(input))
+                    return 0;
+                return input.Length;
+            }
+
+            if (string.IsNullOrEmpty(input))
+            {
+                return command.Length;
+            }
+
+            int commandLen = command.Length;
+            int inputLen = input.Length;
+            int[,] distance = new int[commandLen + 1, inputLen + 1];
+
+            for (int i = 0; i <= commandLen; distance[i, 0] = i++) ;
+            for (int j = 1; j <= inputLen; distance[0, j] = j++) ;
+
+            for (int i = 1; i <= commandLen; i++)
+            {
+                for (int j = 1; j <= inputLen; j++)
+                {
+                    int cost = (input[j - 1] == command[i - 1]) ? 0 : 1;
+                    int min1 = distance[i - 1, j] + 1;
+                    int min2 = distance[i, j - 1] + 1;
+                    int min3 = distance[i - 1, j - 1] + cost;
+                    distance[i, j] = Math.Min(Math.Min(min1, min2), min3);
+                }
+            }
+            return distance[commandLen, inputLen];
         }
     }
 }

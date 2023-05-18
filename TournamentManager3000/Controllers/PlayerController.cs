@@ -52,7 +52,7 @@ namespace TournamentManager3000.Controllers
             Player playerToDelete;
             if (!CommonMethods.TryParsePlayer(input[0], _tournamentContext, out playerToDelete)) return "Player with given ID/nickname does not exist!";
 
-            playerToDelete.IsDeleted = true;
+            playerToDelete.IsDeleted = true;          // creating shadow entity to be able to show deleted players in tournaments
             _tournamentContext.Update(playerToDelete);
             _tournamentContext.SaveChanges();
             return $"Player with ID '{playerToDelete.Id}' and nickname '{playerToDelete.Nickname}'" + CommonMessages.SUCC_DEL;

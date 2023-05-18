@@ -9,7 +9,7 @@
         public Player? Player2 { get; set; }
 
 
-        public int RoundId { get; set; }
+        public int RoundId { get; set; }        // these foreign keys are here for cascade delete purposes (EF Core doesn't support cascade delete without them)
 
 
         public int? WinnerId { get; set; }

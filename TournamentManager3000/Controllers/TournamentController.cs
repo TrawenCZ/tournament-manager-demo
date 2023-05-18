@@ -158,7 +158,7 @@ namespace TournamentManager3000.Controllers
         }
 
 
-        public string Create(MenuInput input)
+        public string CreateTournament(MenuInput input)
         {
             string message;
             if (!CheckOngoingTournament(false, out message)) return message;
@@ -166,12 +166,12 @@ namespace TournamentManager3000.Controllers
 
             List<string> playerIdsOrNicknames = input.Skip(1).ToList();
             List<Player> players;
-            if (!_tournamentCreator.TryLoadPlayers(playerIdsOrNicknames, _tournamentContext, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";
-            if (_tournamentCreator.ContainsDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
+            if (!_tournamentCreator.TryLoadPlayers(playerIdsOrNicknames, _tournamentContext, out players)) return $"Given argument '{playerIdsOrNicknames[players.Count]}' is not valid ID nor nickname.";          // players.Count is the index of the first invalid argument, since players is filled with valid players only
+            if (_tournamentCreator.PlayersContainDuplicate(players, out var duplicatePlayer)) return $"More than one ID or nickname refer to the same player (ID: {duplicatePlayer.Id}, Nickname: {duplicatePlayer.Nickname}).";
 
             string tournamentName = input[0];
 
-            _shadowPlayerStats = players.ToDictionary(p => p, p => (0, 0, 0));
+            _shadowPlayerStats = players.ToDictionary(p => p, p => (0, 0, 0));      // (wins, losses, matchesPlayed) stats of current tournament to store just in memory in case tournament creation fails/is cancelled
             _currentTournament = _tournamentCreator.CreateTournamentAndFirstRound(players, tournamentName);
 
             HasTournamentStarted = true;
