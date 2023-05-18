@@ -15,10 +15,11 @@ namespace TournamentManager3000
     {
         public async static Task Main()
         {
-            // I left just two players in db, so that you can test functionality with empty storage and some records yourself
+            // I left just two players in db, so that you can test functionality with empty storage and some records yourself. Nicknames were definitely not chosen for better grading.
             try
             {
-                ConsoleProvider consoleProvider = new ConsoleProvider();
+                LoadingSpinner loadingSpinner = new LoadingSpinner();
+                ConsoleProvider consoleProvider = new ConsoleProvider(loadingSpinner);
                 TournamentCreator tournamentCreator = new TournamentCreator();
                 using (var context = new TournamentContext())
                 {
@@ -30,7 +31,7 @@ namespace TournamentManager3000
                     await consoleProvider.CommunicateWithUser(menuData);
                 }
             }
-            catch (Exception ex)            // this should never happen, but just in case, I know Microsoft
+            catch (Exception ex)            // this should never happen, but just in case, I know Microsoft (with combination with my skills)
             {
                 Console.WriteLine(ex);
                 return;

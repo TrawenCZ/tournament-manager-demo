@@ -10,18 +10,20 @@ namespace TournamentManager3000.UI
     {
         private LoadingSpinner _loadingSpinner;         // asynchrounous loading spinning animation
 
-        public ConsoleProvider()
+        public ConsoleProvider(LoadingSpinner loadingSpinner)
         {
-            _loadingSpinner = new LoadingSpinner();
+            _loadingSpinner = loadingSpinner;
         }
 
         public async Task CommunicateWithUser(MenuData data)
         {
+            // I tried to access Console only in this and LoadingSpinner class as it was recommended in HW02. It was painful.
             bool shouldContinue = true;
             bool inSubmenu = false;
             string messageToPrint;
             List<string> filler = new List<string>();
             Task<string> taskForActions;
+            CancellationTokenSource ctsForLoading = new CancellationTokenSource();
 
             SubmenuCommandDictionary currentSubmenuData = data.TournamentMenuCommands;      // kinda like menu context
             CommandDictionary menuSwitches = data.MenuSwitches;                             // commands to switch these contexts
@@ -65,11 +67,11 @@ namespace TournamentManager3000.UI
                         continue;
                     }
 
-                    CancellationTokenSource ctsForLoading = new CancellationTokenSource();
+                    ctsForLoading = new CancellationTokenSource();
 
                     if (inSubmenu)
                     {
-                        if (currentSubmenuData.TryGetValue(command, out var subMenuAction)) taskForActions = Task.Run(() => subMenuAction!(argumentsToPass));
+                        if (currentSubmenuData.TryGetValue(command, out var subMenuAction)) taskForActions = Task.Run(() => subMenuAction(argumentsToPass));
                         else taskForActions = Task.Run(() => $"Unrecognized action. {CommandHelper(command, currentSubmenuData.Keys.ToList())}\n\n" + menuNamesAndHelpMsgs[currentSubmenuData].HelpMsg);
                     }
                     else if (menuSwitches.TryGetValue(command, out var mainMenuAction))
@@ -95,8 +97,11 @@ namespace TournamentManager3000.UI
 
                     Console.WriteLine(messageToPrint);
                 }
+                // This will catch all exceptions that can occur above, present them to user and ask if he wants to exit program. I've tried
+                // it actually and program will be stopped, but just because Visual Studio is dumb and thinks it is unhandled.
                 catch (Exception e)
                 {
+                    ctsForLoading.Cancel();
                     Console.WriteLine("Exception occured during runtime:\n" + e.Message);
                     Console.WriteLine($"Do you want to exit program now? (Yes/No)");
                     var answer = Console.ReadLine();
